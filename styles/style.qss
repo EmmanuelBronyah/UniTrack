@@ -1,0 +1,59 @@
+MainWindow {
+  background-color: #DBDBDB;
+}
+
+LoginScreen {
+  background-color: red;
+}
+
+#unitrackLabel {
+  font-family: "Oswald";
+  font-size: 60pt;
+  color: #8c8c8c;
+}
+
+#unitrackLabelLogin {
+  font-family: "Oswald";
+  font-size: 45pt;
+  color: #8c8c8c;
+}
+
+#usernameTextbox {
+  background-color: #ADADAD;
+  font-weight: bold;
+  color: #3B3B3B;
+  padding-left: 10px;
+}
+
+#passwordTextbox {
+  background-color: #ADADAD;
+  font-weight: bold;
+  color: #3B3B3B;
+  padding-left: 10px;
+}
+
+#loginButton {
+  background-color: #8B4513;
+  font-weight: 900;
+  color: white;
+}
+
+#loginButton:hover {
+  background-color: #67330E;
+}
+
+#loginButton:pressed {
+  background-color: #B85B19;
+}
+
+QToolButton {
+  background-color: #ADADAD;
+}
+
+QToolButton:hover {
+  background-color: #8C8C8C;
+}
+
+QToolButton:pressed {
+  background-color: #C4C4C4;
+}

@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icons/icon.ico</file>
+        <file>icons/not_visible.svg</file>
+        <file>icons/visible.svg</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>fonts/Lato/Lato-Regular.ttf</file>
+        <file>fonts/Oswald/Oswald-Bold.ttf</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file>styles/style.qss</file>
+    </qresource>
+</RCC>
