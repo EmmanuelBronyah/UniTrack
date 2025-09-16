@@ -1,7 +1,8 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-import utils
-from components.splashscreen import SplashScreen
-from components.loginscreen import LoginScreen
+from src import utils
+from src.components.splashscreen import SplashScreen
+from src.components.loginscreen import LoginScreen
+import resources
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -12,7 +13,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_ui()
 
     def setup_window(self):
-        self.setWindowIcon(QtGui.QIcon("icons/icon.ico"))
+        self.setWindowIcon(QtGui.QIcon(":/assets/icons/unitrack_icon"))
         self.setWindowTitle("UniTrack")
         self.setFixedSize(QtCore.QSize(950, 550))
 

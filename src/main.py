@@ -1,7 +1,7 @@
 import sys
 from PySide6 import QtWidgets, QtGui
-from MainWindow import MainWindow
-import utils
+from src.mainwindow import MainWindow
+from src import utils
 
 
 def main():

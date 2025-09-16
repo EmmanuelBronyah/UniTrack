@@ -1,5 +1,6 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-import utils
+from src import utils
+import resources
 
 
 class LoginScreen(QtWidgets.QWidget):
@@ -12,12 +13,13 @@ class LoginScreen(QtWidgets.QWidget):
     def setup_window(self):
         self.setFixedSize(QtCore.QSize(950, 550))
 
-    def setup_login_screen(self):
-        container_layout = QtWidgets.QHBoxLayout(self)
-        container_layout.setSpacing(170)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    def setup_container(self):
+        self.container_layout = QtWidgets.QHBoxLayout(self)
+        self.container_layout.setSpacing(170)
+        self.container_layout.setContentsMargins(0, 0, 0, 0)
+        self.container_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
+    def setup_left_section(self):
         left_section_layout = QtWidgets.QHBoxLayout()
         left_section_layout.setSpacing(8)
         left_section_layout.setContentsMargins(70, 0, 0, 0)
@@ -25,25 +27,26 @@ class LoginScreen(QtWidgets.QWidget):
 
         unitrack_label = QtWidgets.QLabel("UniTrack")
         unitrack_label.setObjectName("unitrackLabelLogin")
-        left_section_layout.addWidget(unitrack_label)
 
         icon_label = QtWidgets.QLabel()
-        icon = QtGui.QPixmap("icons/icon.ico")
+        icon = QtGui.QPixmap(":/assets/icons/unitrack_icon")
         scaled_icon = icon.scaledToHeight(
             55, QtCore.Qt.TransformationMode.SmoothTransformation
         )
         icon_label.setObjectName("iconLabel")
         icon_label.setPixmap(scaled_icon)
+
+        left_section_layout.addWidget(unitrack_label)
         left_section_layout.addWidget(icon_label)
 
-        container_layout.addLayout(left_section_layout)
+        self.container_layout.addLayout(left_section_layout)
 
-        # right section
+    def setup_right_section(self):
         right_section_layout = QtWidgets.QVBoxLayout()
         right_section_layout.setSpacing(60)
         right_section_layout.setContentsMargins(0, 0, 70, 0)
 
-        # right tops section
+        # right top section(username and password text boxes)
         right_top_section_layout = QtWidgets.QVBoxLayout()
         right_top_section_layout.setSpacing(28)
 
@@ -51,9 +54,9 @@ class LoginScreen(QtWidgets.QWidget):
         username_textbox.setObjectName("usernameTextbox")
         username_textbox.setFixedHeight(40)
         username_textbox.setFixedWidth(290)
-        username_textbox.setPlaceholderText("Username")
-        right_top_section_layout.addWidget(username_textbox)
+        username_textbox.setPlaceholderText("Service Number")
 
+        # layout for password textbox and visibility icon button
         password_visibility_icon_box = QtWidgets.QHBoxLayout()
         password_visibility_icon_box.setSpacing(3)
         password_visibility_icon_box.setContentsMargins(0, 0, 0, 0)
@@ -64,19 +67,23 @@ class LoginScreen(QtWidgets.QWidget):
         self.password_textbox.setFixedWidth(290)
         self.password_textbox.setPlaceholderText("Password")
         self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-        password_visibility_icon_box.addWidget(self.password_textbox)
 
         self.visibility_button = QtWidgets.QToolButton()
+        self.visibility_button.setObjectName("iconLabel")
         self.visibility_button.setFixedHeight(30)
         self.visibility_button.setFixedWidth(30)
-        visibility_icon = QtGui.QIcon("icons/visible.svg")
-        self.visibility_button.setIcon(visibility_icon)
-        self.visibility_button.setObjectName("iconLabel")
         self.visibility_button.setCheckable(True)
         self.visibility_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+
+        visibility_icon = QtGui.QIcon(":/assets/icons/visible")
+        self.visibility_button.setIcon(visibility_icon)
+
         self.visibility_button.toggled.connect(self.toggle_password_visibility)
+
+        password_visibility_icon_box.addWidget(self.password_textbox)
         password_visibility_icon_box.addWidget(self.visibility_button)
 
+        right_top_section_layout.addWidget(username_textbox)
         right_top_section_layout.addLayout(password_visibility_icon_box)
 
         right_section_layout.addLayout(right_top_section_layout)
@@ -89,16 +96,22 @@ class LoginScreen(QtWidgets.QWidget):
         login_button.setFixedHeight(50)
         login_button.setFixedWidth(290)
         login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+
         right_bottom_section_layout.addWidget(login_button)
 
         right_section_layout.addLayout(right_bottom_section_layout)
 
-        container_layout.addLayout(right_section_layout)
+        self.container_layout.addLayout(right_section_layout)
+
+    def setup_login_screen(self):
+        self.setup_container()
+        self.setup_left_section()
+        self.setup_right_section()
 
     def toggle_password_visibility(self, checked):
         if checked:
             self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Normal)
-            self.visibility_button.setIcon(QtGui.QIcon("icons/not_visible.svg"))
+            self.visibility_button.setIcon(QtGui.QIcon(":/assets/icons/not_visible"))
         else:
             self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-            self.visibility_button.setIcon(QtGui.QIcon("icons/visible.svg"))
+            self.visibility_button.setIcon(QtGui.QIcon(":/assets/icons/visible"))

@@ -1,12 +1,13 @@
 from PySide6 import QtWidgets, QtGui, QtCore
+import resources
 
 
 def load_fonts():
-    lato_font_path = "fonts/Lato/Lato-Regular.ttf"
-    oswald_font_path = "fonts/Oswald/Oswald-Bold.ttf"
+    lato_font_path = ":/assets/fonts/lato"
+    oswald_font_path_bold = ":/assets/fonts/oswald_bold"
 
     QtGui.QFontDatabase.addApplicationFont(lato_font_path)
-    QtGui.QFontDatabase.addApplicationFont(oswald_font_path)
+    QtGui.QFontDatabase.addApplicationFont(oswald_font_path_bold)
 
 
 def load_styles(app):
@@ -14,8 +15,11 @@ def load_styles(app):
     load_fonts()
     app.setFont("Lato")
 
-    with open("styles/style.qss", "r") as f:
-        app.setStyleSheet(f.read())
+    file = QtCore.QFile(":/assets/styles/style")
+    if file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
+        stream = QtCore.QTextStream(file)
+        app.setStyleSheet(stream.readAll())
+        file.close()
 
 
 _animations = []

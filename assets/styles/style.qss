@@ -2,10 +2,6 @@ MainWindow {
   background-color: #DBDBDB;
 }
 
-LoginScreen {
-  background-color: red;
-}
-
 #unitrackLabel {
   font-family: "Oswald";
   font-size: 60pt;

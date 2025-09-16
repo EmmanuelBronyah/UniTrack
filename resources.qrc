@@ -1,14 +1,15 @@
 <RCC>
-    <qresource prefix="/icons">
-        <file>icons/icon.ico</file>
-        <file>icons/not_visible.svg</file>
-        <file>icons/visible.svg</file>
+    <qresource prefix="/assets/icons">
+        <file alias="unitrack_icon">assets/icons/icon.ico</file>
+        <file alias="not_visible">assets/icons/not_visible.svg</file>
+        <file alias="visible">assets/icons/visible.svg</file>
     </qresource>
-    <qresource prefix="/fonts">
-        <file>fonts/Lato/Lato-Regular.ttf</file>
-        <file>fonts/Oswald/Oswald-Bold.ttf</file>
+    <qresource prefix="/assets/fonts">
+        <file alias="oswald_bold">assets/fonts/Oswald/Oswald-Bold.ttf</file>
+        <file alias="lato">assets/fonts/Lato/Lato-Regular.ttf</file>
+        <file alias="oswald_regular">assets/fonts/Oswald/Oswald-Regular.ttf</file>
     </qresource>
-    <qresource prefix="/styles">
-        <file>styles/style.qss</file>
+    <qresource prefix="/assets/styles">
+        <file alias="style">assets/styles/style.qss</file>
     </qresource>
 </RCC>

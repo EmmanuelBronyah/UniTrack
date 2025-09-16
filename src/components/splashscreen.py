@@ -1,5 +1,6 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-import utils
+from src import utils
+import resources
 
 
 class SplashScreen(QtWidgets.QWidget):
@@ -22,7 +23,7 @@ class SplashScreen(QtWidgets.QWidget):
         self.unitrack_label.setObjectName("unitrackLabel")
 
         self.icon_label = QtWidgets.QLabel()
-        icon = QtGui.QPixmap("icons/icon.ico")
+        icon = QtGui.QPixmap(":/assets/icons/unitrack_icon")
         scaled_icon = icon.scaledToHeight(
             75, QtCore.Qt.TransformationMode.SmoothTransformation
         )
