@@ -5,17 +5,32 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import os
+from pathlib import Path
+from platformdirs import user_data_dir
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
+
+APP_NAME, APP_AUTHOR = "UniTrack", "UniTrack"
+
+
+def create_db_path():
+    data_dir = Path(user_data_dir(APP_NAME, APP_AUTHOR))
+    data_dir.mkdir(parents=True, exist_ok=True)
+    db_path = data_dir / "unitrack.db"
+
+    return f"sqlite:///{db_path.as_posix()}"
+
+
+db_url = create_db_path()
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -24,7 +39,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from src.api.database.db import Base
+from src.database.db import Base
 
 target_metadata = Base.metadata
 

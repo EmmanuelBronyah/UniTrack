@@ -3,6 +3,9 @@
         <file alias="unitrack_icon">assets/icons/icon.ico</file>
         <file alias="not_visible">assets/icons/not_visible.svg</file>
         <file alias="visible">assets/icons/visible.svg</file>
+        <file alias="spinner-gif">assets/icons/spinner.gif</file>
+        <file alias="search">assets/icons/search.svg</file>
+        <file alias="account">assets/icons/account.svg</file>
     </qresource>
     <qresource prefix="/assets/fonts">
         <file alias="oswald_bold">assets/fonts/Oswald/Oswald-Bold.ttf</file>

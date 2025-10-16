@@ -1,4 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
+from src.crud.crud_user import create_user
+from src.database.db import SessionLocal
+from src.database.models import User
 from src import utils
 import resources
 
@@ -7,8 +10,18 @@ class SplashScreen(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.create_admin_user()
         self.setup_window()
         self.setup_logo_header()
+
+    @staticmethod
+    def create_admin_user():
+        with SessionLocal() as db:
+            users = db.query(User).all()
+            if not users:
+                admin_user = create_user(db, "010101", "Admin", "010101")
+                return admin_user
+            return
 
     def setup_window(self):
         self.setFixedSize(QtCore.QSize(950, 550))

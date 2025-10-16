@@ -1,9 +1,14 @@
 from PySide6 import QtWidgets, QtCore, QtGui
+from src.crud.crud_user import login_user
+from src.database.db import SessionLocal
 from src import utils
 import resources
+import traceback
+import sys
 
 
 class LoginScreen(QtWidgets.QWidget):
+    login_success = QtCore.Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -54,7 +59,8 @@ class LoginScreen(QtWidgets.QWidget):
         username_textbox.setObjectName("usernameTextbox")
         username_textbox.setFixedHeight(40)
         username_textbox.setFixedWidth(290)
-        username_textbox.setPlaceholderText("Service Number")
+        username_textbox.setPlaceholderText("Username")
+        username_textbox.textEdited.connect(self.get_username)
 
         # layout for password textbox and visibility icon button
         password_visibility_icon_box = QtWidgets.QHBoxLayout()
@@ -67,6 +73,7 @@ class LoginScreen(QtWidgets.QWidget):
         self.password_textbox.setFixedWidth(290)
         self.password_textbox.setPlaceholderText("Password")
         self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+        self.password_textbox.textEdited.connect(self.get_password)
 
         self.visibility_button = QtWidgets.QToolButton()
         self.visibility_button.setObjectName("iconLabel")
@@ -90,17 +97,36 @@ class LoginScreen(QtWidgets.QWidget):
 
         # right bottom section
         right_bottom_section_layout = QtWidgets.QVBoxLayout()
+        right_bottom_section_layout.setSpacing(10)
+        right_bottom_section_layout.setContentsMargins(0, 0, 32, 0)
 
-        login_button = QtWidgets.QPushButton("LOGIN")
-        login_button.setObjectName("loginButton")
-        login_button.setFixedHeight(50)
-        login_button.setFixedWidth(290)
-        login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.login_button = QtWidgets.QPushButton("LOGIN")
+        self.login_button.setObjectName("loginButton")
+        self.login_button.setFixedHeight(50)
+        self.login_button.setFixedWidth(290)
+        self.login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.login_button.clicked.connect(self.perform_login)
 
-        right_bottom_section_layout.addWidget(login_button)
+        self.spinner_box = QtWidgets.QLabel()
+        self.spinner_box.setFixedSize(45, 45)
+        self.spinner_box.setVisible(False)
+
+        self.movie = QtGui.QMovie(":/assets/icons/spinner-gif")
+        self.movie.setScaledSize(self.spinner_box.size())
+        self.spinner_box.setMovie(self.movie)
+
+        self.info_box = QtWidgets.QLabel("Please enter username and password")
+        self.info_box.setVisible(False)
+
+        right_bottom_section_layout.addWidget(self.login_button)
+        right_bottom_section_layout.addWidget(
+            self.spinner_box, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
+        right_bottom_section_layout.addWidget(
+            self.info_box, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
 
         right_section_layout.addLayout(right_bottom_section_layout)
-
         self.container_layout.addLayout(right_section_layout)
 
     def setup_login_screen(self):
@@ -115,3 +141,96 @@ class LoginScreen(QtWidgets.QWidget):
         else:
             self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
             self.visibility_button.setIcon(QtGui.QIcon(":/assets/icons/visible"))
+
+    def get_username(self, text):
+        self.username = text
+
+    def get_password(self, text):
+        self.password = text
+
+    def handle_login(self, user):
+        self.movie.stop()
+        self.spinner_box.setVisible(False)
+
+        if user:
+            self.info_box.setText("Login was successful.")
+            self.info_box.setStyleSheet("color: #28a745; font-weight: bold;")
+            self.info_box.setVisible(True)
+            self.login_success.emit(user)
+
+        else:
+            self.info_box.setText("Invalid username or password.")
+            self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
+            self.info_box.setVisible(True)
+
+    def handle_error(self, error_tuple):
+        exctype, value, tb_str = error_tuple
+
+        self.movie.stop()
+        self.spinner_box.setVisible(False)
+
+        self.info_box.setText(str(value))
+        self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
+        self.info_box.setVisible(True)
+
+    def perform_login(self):
+
+        username = getattr(self, "username", "").strip()
+        password = getattr(self, "password", "")
+
+        if not username or not password:
+            self.info_box.setText("Please enter username and password.")
+            self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
+            self.info_box.setVisible(True)
+            return
+
+        self.movie.start()
+        self.spinner_box.setVisible(True)
+        self.info_box.setVisible(False)
+
+        with SessionLocal() as db:
+            # username = "Admin"
+            # password = "010101"
+            worker = Worker(login_user, db, username, password)
+
+            self.threadpool = QtCore.QThreadPool()
+            worker.signals.result.connect(self.handle_login)
+            worker.signals.error.connect(self.handle_error)
+
+            self.threadpool.start(worker)
+
+
+class WorkerSignals(QtCore.QObject):
+
+    finished = QtCore.Signal()
+    error = QtCore.Signal(tuple)
+    result = QtCore.Signal(object)
+    progress = QtCore.Signal(float)
+
+
+class Worker(QtCore.QRunnable):
+
+    def __init__(self, fn, db, username, password):
+        super().__init__()
+        self.fn = fn
+        self.db = db
+        self.username = username
+        self.password = password
+        self.signals = WorkerSignals()
+        self.progress_callback = self.signals.progress
+
+    @QtCore.Slot()
+    def run(self):
+        try:
+            result = self.fn(self.db, self.username, self.password)
+
+        except Exception:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+
+        else:
+            self.signals.result.emit(result)
+
+        finally:
+            self.signals.finished.emit()
