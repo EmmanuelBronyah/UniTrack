@@ -98,23 +98,6 @@ class DashboardScreen(QtWidgets.QWidget):
         self.buttons_row_layout.setContentsMargins(70, 0, 0, 0)
         self.buttons_row_layout.setSpacing(100)
 
-        self.import_data_button = QtWidgets.QPushButton("Import data")
-        self.import_data_button.setFixedHeight(40)
-        self.import_data_button.setFixedWidth(120)
-        self.import_data_button.setStyleSheet(
-            """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
-            """
-        )
-        self.import_data_button.clicked.connect(self.import_data)
-
-        self.record_buttons_layout = QtWidgets.QHBoxLayout()
-        self.record_buttons_layout.setSpacing(20)
-        self.record_buttons_layout.setContentsMargins(0, 0, 0, 0)
-
         self.add_record_button = QtWidgets.QPushButton("Add record")
         self.add_record_button.setFixedHeight(40)
         self.add_record_button.setFixedWidth(120)
@@ -126,10 +109,29 @@ class DashboardScreen(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
-        self.all_records_button = QtWidgets.QPushButton("All records")
-        self.all_records_button.setFixedHeight(40)
-        self.all_records_button.setFixedWidth(120)
-        self.all_records_button.setStyleSheet(
+
+        self.import_export_button_layout = QtWidgets.QHBoxLayout()
+        self.import_export_button_layout.setSpacing(20)
+        self.import_export_button_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.import_data_button = QtWidgets.QPushButton("Import data")
+        self.import_data_button.setFixedHeight(40)
+        self.import_data_button.setFixedWidth(120)
+        self.import_data_button.setStyleSheet(
+            """
+                background-color: white;
+                color: #8B4513;
+                font-weight: bold;
+                border-radius: 5;
+                border: 2pt solid #8B4513;
+            """
+        )
+        self.import_data_button.clicked.connect(self.import_data)
+
+        self.export_button = QtWidgets.QPushButton("Export data")
+        self.export_button.setFixedHeight(40)
+        self.export_button.setFixedWidth(120)
+        self.export_button.setStyleSheet(
             """
                 background-color: #8B4513;
                 color: white;
@@ -138,11 +140,11 @@ class DashboardScreen(QtWidgets.QWidget):
             """
         )
 
-        self.record_buttons_layout.addWidget(self.add_record_button)
-        self.record_buttons_layout.addWidget(self.all_records_button)
+        self.import_export_button_layout.addWidget(self.import_data_button)
+        self.import_export_button_layout.addWidget(self.export_button)
 
-        self.buttons_row_layout.addWidget(self.import_data_button)
-        self.buttons_row_layout.addLayout(self.record_buttons_layout)
+        self.buttons_row_layout.addWidget(self.add_record_button)
+        self.buttons_row_layout.addLayout(self.import_export_button_layout)
 
         self.container_layout.addWidget(self.buttons_row_widget, stretch=1)
 
