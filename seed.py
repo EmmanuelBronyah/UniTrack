@@ -11,34 +11,64 @@ grades = [
     "Pharmacist",
 ]
 categories = [
-    "ARTISAN",
-    "LABOURER",
-    "EXECUTIVE OFFICER",
-    "ADMINISTRATIVE OFFICER",
-    "MEDICAL OFFICER",
+    "Artisan",
+    "Chief Yard Foreman",
+    "Driver",
+    "Field Worker",
+    "General",
+    "Labourer",
+    "Medical",
+    "Stores",
+    "Technician",
+    "Warden",
 ]
 gender = ["Male", "Female"]
 deduction_status = ["Full Deduction", "Partial Deduction", "No Deduction"]
 rank = ["Junior", "Senior"]
 
+units_to_add = []
+grade_to_add = []
+category_to_add = []
+deduction_status_to_add = []
+gender_to_add = []
+rank_to_add = []
+
 with SessionLocal() as db:
     for unit in units:
-        db.add(Unit(name=unit))
+        value = Unit(name=unit)
+        units_to_add.append(value)
+
+    db.add_all(units_to_add)
 
     for grade in grades:
-        db.add(Grade(name=grade))
+        value = Grade(name=grade)
+        grade_to_add.append(value)
+
+    db.add_all(grade_to_add)
 
     for category in categories:
-        db.add(Category(name=category))
+        value = Category(name=category)
+        category_to_add.append(value)
+
+    db.add_all(category_to_add)
 
     for name in gender:
-        db.add(Gender(name=name))
+        value = Gender(name=name)
+        gender_to_add.append(value)
+
+    db.add_all(gender_to_add)
 
     for name in deduction_status:
-        db.add(DeductionStatus(name=name))
+        value = DeductionStatus(name=name)
+        deduction_status_to_add.append(value)
+
+    db.add_all(deduction_status_to_add)
 
     for name in rank:
-        db.add(Rank(name=name))
+        value = Rank(name=name)
+        rank_to_add.append(value)
+
+    db.add_all(rank_to_add)
 
     db.commit()
 

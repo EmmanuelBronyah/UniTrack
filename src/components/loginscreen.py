@@ -3,8 +3,7 @@ from src.crud.crud_user import login_user
 from src.database.db import SessionLocal
 from src import utils
 import resources
-import traceback
-import sys
+from src.components.workerclass import Worker
 
 
 class LoginScreen(QtWidgets.QWidget):
@@ -148,6 +147,16 @@ class LoginScreen(QtWidgets.QWidget):
     def get_password(self, text):
         self.password = text
 
+    def handle_error(self, error_tuple):
+        exctype, value, tb_str = error_tuple
+
+        self.movie.stop()
+        self.spinner_box.setVisible(False)
+
+        self.info_box.setText(str(value))
+        self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
+        self.info_box.setVisible(True)
+
     def handle_login(self, user):
         self.movie.stop()
         self.spinner_box.setVisible(False)
@@ -162,16 +171,6 @@ class LoginScreen(QtWidgets.QWidget):
             self.info_box.setText("Invalid username or password.")
             self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
             self.info_box.setVisible(True)
-
-    def handle_error(self, error_tuple):
-        exctype, value, tb_str = error_tuple
-
-        self.movie.stop()
-        self.spinner_box.setVisible(False)
-
-        self.info_box.setText(str(value))
-        self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
-        self.info_box.setVisible(True)
 
     def perform_login(self):
 
@@ -189,8 +188,6 @@ class LoginScreen(QtWidgets.QWidget):
         self.info_box.setVisible(False)
 
         with SessionLocal() as db:
-            # username = "Admin"
-            # password = "010101"
             worker = Worker(login_user, db, username, password)
 
             self.threadpool = QtCore.QThreadPool()
@@ -198,39 +195,3 @@ class LoginScreen(QtWidgets.QWidget):
             worker.signals.error.connect(self.handle_error)
 
             self.threadpool.start(worker)
-
-
-class WorkerSignals(QtCore.QObject):
-
-    finished = QtCore.Signal()
-    error = QtCore.Signal(tuple)
-    result = QtCore.Signal(object)
-    progress = QtCore.Signal(float)
-
-
-class Worker(QtCore.QRunnable):
-
-    def __init__(self, fn, db, username, password):
-        super().__init__()
-        self.fn = fn
-        self.db = db
-        self.username = username
-        self.password = password
-        self.signals = WorkerSignals()
-        self.progress_callback = self.signals.progress
-
-    @QtCore.Slot()
-    def run(self):
-        try:
-            result = self.fn(self.db, self.username, self.password)
-
-        except Exception:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-
-        else:
-            self.signals.result.emit(result)
-
-        finally:
-            self.signals.finished.emit()

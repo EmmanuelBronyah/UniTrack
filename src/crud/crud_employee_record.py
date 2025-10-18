@@ -1,18 +1,18 @@
 import pandas as pd
 from sqlalchemy.orm import Session
-from src.database.models import EmployeeRecord
+from src.database.models import EmployeeRecord, Employee, Occurrence
 from decimal import Decimal
 from src.utils import (
     missing_headers,
     four_dp_decimal,
     get_date,
-    calculate_outstanding_difference,
-    check_for_full_payment,
-    check_for_no_deductions,
+    assign_outstanding_amount,
     is_none,
     integrity_error_message,
     validate_field,
     validate_amounts,
+    select_value,
+    assign_deduction_status,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -25,27 +25,30 @@ def save_from_file(db: Session, file_path: str) -> dict:
     valid_headers = [
         "service number",
         "name",
-        "grade",
+        "gender",
         "unit",
-        "appointment date",
-        "total amount",
+        "grade",
+        "rank",
+        "category",
+        "uniform price",
         "amount deducted",
-        "outstanding difference",
     ]
     employee_record_dict = {
         "service_number": "",
         "name": "",
+        "gender": "",
         "unit": "",
         "grade": "",
-        "appointment_date": "",
-        "total_amount": "",
+        "rank": "",
+        "category": "",
+        "uniform_price": "",
         "amount_deducted": "",
-        "outstanding_difference": "",
-        "full_payment": False,
-        "no_payment": False,
+        "outstanding_amount": "",
+        "deduction_status": "",
     }
     number_of_records_saved = 0
-    records_to_save = []
+    employee_records_to_save = []
+    occurrence_records_to_save = []
 
     df = pd.read_excel(file_path, dtype=str)
 
@@ -68,19 +71,21 @@ def save_from_file(db: Session, file_path: str) -> dict:
         else:
             for row_index in range(len(df)):
 
+                employee_record_dict = employee_record_dict.copy()
+
                 for col_index in range(len(df.columns)):
 
                     header = df.columns[col_index].strip().lower()
                     cell_value = df.iat[row_index, col_index]
 
                     match header:
-                        case "service number" | "name" | "grade" | "unit":
+                        case "service number" | "name":
                             is_empty = is_none(cell_value)
 
                             if is_empty:
+                                db.rollback()
                                 return {
-                                    "error": f"{header.capitalize()} must not be empty.",
-                                    "records saved": number_of_records_saved,
+                                    "error": f"{header.capitalize()} must not be empty."
                                 }
                             else:
                                 result = validate_field(
@@ -89,70 +94,93 @@ def save_from_file(db: Session, file_path: str) -> dict:
                                     employee_record_dict,
                                 )
                                 if not result:
+                                    db.rollback()
                                     return {
-                                        "error": f"Invalid Service Number ({cell_value}) in Service Number column.",
-                                        "records saved": number_of_records_saved,
+                                        "error": f"Invalid Service Number: {cell_value} in Service Number column."
+                                    }
+                                elif result == "EXCEEDED":
+                                    return {
+                                        "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits."
                                     }
                                 else:
                                     employee_record_dict = result
 
-                        case "appointment date":
+                        case "gender" | "unit" | "grade" | "rank" | "category":
+                            is_empty = is_none(cell_value)
 
-                            if cell_value:
-                                date = get_date(cell_value)
-
-                                if not date:
-                                    return {
-                                        "error": f"Invalid date format ({cell_value}). Date should be in the format 'YYYY-MM-DD'.",
-                                        "records saved": number_of_records_saved,
-                                    }
-
-                                employee_record_dict[header.replace(" ", "_")] = date
-
+                            if is_empty:
+                                db.rollback()
+                                return {
+                                    "error": f"{header.capitalize()} must not be empty."
+                                }
                             else:
-                                employee_record_dict[header.replace(" ", "_")] = None
+                                result = select_value(
+                                    cell_value, header, employee_record_dict
+                                )
+                                if not result:
+                                    db.rollback()
+                                    return {
+                                        "error": f"{header.capitalize()}: {cell_value} does not exist in the database."
+                                    }
+                                else:
+                                    employee_record_dict = result
 
-                        case (
-                            "total amount"
-                            | "amount deducted"
-                            | "outstanding difference"
-                        ):
+                        case "uniform price" | "amount deducted":
 
                             result = validate_amounts(
                                 cell_value, header, employee_record_dict
                             )
 
                             if not result:
+                                db.rollback()
                                 return {
-                                    "error": f"Invalid digits ({cell_value}) in {header.capitalize()} column.",
-                                    "records saved": number_of_records_saved,
+                                    "error": f"Invalid digits: {cell_value} in {header.capitalize()} column."
                                 }
                             else:
                                 employee_record_dict = result
 
-                employee_record_dict = check_for_no_deductions(employee_record_dict)
-                employee_record_dict = check_for_full_payment(employee_record_dict)
+                employee_record_dict = assign_outstanding_amount(employee_record_dict)
+                result = assign_deduction_status(employee_record_dict)
 
-                employee_record = EmployeeRecord(**employee_record_dict)
-                records_to_save.append(employee_record)
+                if not result:
+                    db.rollback()
+                    return {
+                        "error": "Uniform Price column must not be empty",
+                    }
+
+                # Create a new employee if does not exist
+                employee = (
+                    db.query(Employee)
+                    .filter(Employee.service_number == result["service_number"])
+                    .first()
+                )
+
+                if employee is None:
+                    employee = Employee(
+                        service_number=result["service_number"],
+                        name=result["name"],
+                        gender_id=result["gender"],
+                        unit_id=result["unit"],
+                        grade_id=result["grade"],
+                        rank_id=result["rank"],
+                        category_id=result["category"],
+                    )
+                    db.add(employee)
+                    db.flush()  # writes to DB, assigns ID, but doesn’t commit yet
+
+                # Get created employee id and assign it to employee's occurrence record
+                occurrence = Occurrence(
+                    employee_id=employee.id,
+                    uniform_price=result["uniform_price"],
+                    amount_deducted=result["amount_deducted"],
+                    outstanding_amount=result["outstanding_amount"],
+                    deduction_status_id=result["deduction_status"],
+                )
+                db.add(occurrence)
 
                 number_of_records_saved += 1
 
-            try:
-                db.add_all(records_to_save)
-                db.commit()
-
-            except IntegrityError as e:
-                db.rollback()
-
-                exception_message = str(e.orig)
-                service_number = e.params[0]
-
-                error_message = integrity_error_message(
-                    exception_message, service_number
-                )
-
-                return {"error": error_message}
+            db.commit()
 
             return {"records saved": number_of_records_saved}
 
@@ -242,8 +270,8 @@ def save_record(db: Session, employee_record: dict):
                 else:
                     employee_record_dict = result
 
-    employee_record_dict = check_for_no_deductions(employee_record_dict)
-    employee_record_dict = check_for_full_payment(employee_record_dict)
+    # employee_record_dict = check_for_no_deductions(employee_record_dict)
+    # employee_record_dict = check_for_full_payment(employee_record_dict)
 
     employee_record_data = EmployeeRecord(**employee_record_dict)
 

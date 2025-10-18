@@ -16,6 +16,7 @@ from src.utils import (
     employee_data_info_error,
     integrity_error_message,
 )
+from src.components.workerclass import Worker
 
 
 class DashboardScreen(QtWidgets.QWidget):
@@ -319,9 +320,7 @@ class DashboardScreen(QtWidgets.QWidget):
         records_saved = response.get("records saved", None)
 
         if error:
-            self.employee_data_info.setText(
-                f"{error} Processed {records_saved if records_saved else '0'} records."
-            )
+            self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
             self.employee_data_info.setVisible(True)
         else:
@@ -330,13 +329,13 @@ class DashboardScreen(QtWidgets.QWidget):
             )
             employee_data_info_success(self.employee_data_info)
 
-            # Commence records retrieval from db
-            self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
+        # Commence records retrieval from db
+        # self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
 
-            self.retrieve_records_threadpool = QtCore.QThreadPool()
-            self.retrieve_records_worker.signals.result.connect(self.display_records)
-            self.retrieve_records_worker.signals.error.connect(self.handle_error)
-            self.retrieve_records_threadpool.start(self.retrieve_records_worker)
+        # self.retrieve_records_threadpool = QtCore.QThreadPool()
+        # self.retrieve_records_worker.signals.result.connect(self.display_records)
+        # self.retrieve_records_worker.signals.error.connect(self.handle_error)
+        # self.retrieve_records_threadpool.start(self.retrieve_records_worker)
 
     def handle_error(self, error_tuple):
         exception_type, value, traceback_str = error_tuple
@@ -394,39 +393,3 @@ class DashboardScreen(QtWidgets.QWidget):
         self.setup_buttons_row()
         self.employee_records_table()
         self.footer_area()
-
-
-class WorkerSignals(QtCore.QObject):
-
-    finished = QtCore.Signal()
-    error = QtCore.Signal(tuple)
-    result = QtCore.Signal(object)
-    progress = QtCore.Signal(float)
-
-
-class Worker(QtCore.QRunnable):
-
-    def __init__(self, fn, *args, **kwargs):
-        super().__init__(self)
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
-        self.progress_callback = self.signals.progress
-
-    @QtCore.Slot()
-    def run(self):
-
-        try:
-            result = self.fn(*self.args, **self.kwargs)
-
-        except Exception:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-
-        else:
-            self.signals.result.emit(result)
-
-        finally:
-            self.signals.finished.emit()

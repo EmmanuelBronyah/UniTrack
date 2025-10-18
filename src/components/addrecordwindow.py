@@ -8,6 +8,7 @@ import traceback
 from src.crud.crud_employee_record import save_record
 from src.database.db import SessionLocal
 import sys
+from src.components.workerclass import Worker
 
 
 class AddRecordWindow(QtWidgets.QMainWindow):
@@ -331,39 +332,3 @@ class AddRecordWindow(QtWidgets.QMainWindow):
         self.save_record_worker.signals.result.connect(self.display_updated_values)
         self.save_record_worker.signals.error.connect(self.handle_error)
         self.save_record_threadpool.start(self.save_record_worker)
-
-
-class WorkerSignals(QtCore.QObject):
-
-    finished = QtCore.Signal()
-    error = QtCore.Signal(tuple)
-    result = QtCore.Signal(object)
-    progress = QtCore.Signal(float)
-
-
-class Worker(QtCore.QRunnable):
-
-    def __init__(self, fn, *args, **kwargs):
-        super().__init__(self)
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
-        self.progress_callback = self.signals.progress
-
-    @QtCore.Slot()
-    def run(self):
-
-        try:
-            result = self.fn(*self.args, **self.kwargs)
-
-        except Exception:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-
-        else:
-            self.signals.result.emit(result)
-
-        finally:
-            self.signals.finished.emit()

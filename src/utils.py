@@ -4,6 +4,9 @@ import resources
 from decimal import Decimal, ROUND_HALF_UP
 from decimal import InvalidOperation
 from datetime import datetime
+from src.database.db import SessionLocal
+from src.database.models import Gender, Grade, Rank, Category, Unit, DeductionStatus
+from sqlalchemy import func
 
 
 def load_fonts():
@@ -60,12 +63,13 @@ def missing_headers(headers_in_worksheet):
     valid_headers = [
         "service number",
         "name",
-        "grade",
+        "gender",
         "unit",
-        "appointment date",
-        "total amount",
+        "grade",
+        "rank",
+        "category",
+        "uniform price",
         "amount deducted",
-        "outstanding difference",
     ]
 
     headers_found_in_worksheet = []
@@ -102,41 +106,70 @@ def get_date(cell_value):
             return False
 
 
-def calculate_outstanding_difference(total_amount, amount_deducted):
-    return total_amount - amount_deducted
-
-
-def check_for_no_deductions(employee_record_dict):
+def assign_outstanding_amount(employee_record_dict):
+    uniform_price = employee_record_dict["uniform_price"]
     amount_deducted = employee_record_dict["amount_deducted"]
-    if amount_deducted.is_zero():
-        employee_record_dict["no_payment"] = True
-        return employee_record_dict
 
-    else:
-        employee_record_dict["no_payment"] = False
-        return employee_record_dict
+    difference = uniform_price - amount_deducted
+    employee_record_dict["outstanding_amount"] = difference
+
+    return employee_record_dict
 
 
-def check_for_full_payment(employee_record_dict):
-    total_amount = employee_record_dict["total_amount"]
-    amount_deducted = employee_record_dict["amount_deducted"]
-    difference = total_amount - amount_deducted
+def assign_deduction_status(employee_record_dict):
+    with SessionLocal() as db:
+        uniform_price = employee_record_dict["uniform_price"]
+        amount_deducted = employee_record_dict["amount_deducted"]
+        difference = uniform_price - amount_deducted
 
-    if total_amount.is_zero() and amount_deducted.is_zero():
-        employee_record_dict["full_payment"] = False
-        return employee_record_dict
+        if not uniform_price.is_zero():
 
-    elif difference.is_zero():
-        employee_record_dict["full_payment"] = True
-        return employee_record_dict
+            if amount_deducted.is_zero():
+                value_id = (
+                    db.query(DeductionStatus)
+                    .filter(func.lower(DeductionStatus.name) == "no deduction")
+                    .first()
+                    .id
+                )
+                employee_record_dict["deduction_status"] = value_id
 
-    elif not difference.is_zero() and not difference.is_signed():
-        employee_record_dict["full_payment"] = False
-        return employee_record_dict
+                return employee_record_dict
 
-    elif not difference.is_zero() and difference.is_signed():
-        employee_record_dict["full_payment"] = True
-        return employee_record_dict
+            elif difference.is_zero():
+                value_id = (
+                    db.query(DeductionStatus)
+                    .filter(func.lower(DeductionStatus.name) == "full deduction")
+                    .first()
+                    .id
+                )
+                employee_record_dict["deduction_status"] = value_id
+
+                return employee_record_dict
+
+            elif not difference.is_zero() and not difference.is_signed():
+                value_id = (
+                    db.query(DeductionStatus)
+                    .filter(func.lower(DeductionStatus.name) == "partial deduction")
+                    .first()
+                    .id
+                )
+                employee_record_dict["deduction_status"] = value_id
+
+                return employee_record_dict
+
+            elif not difference.is_zero() and difference.is_signed():
+                value_id = (
+                    db.query(DeductionStatus)
+                    .filter(func.lower(DeductionStatus.name) == "full deduction")
+                    .first()
+                    .id
+                )
+                employee_record_dict["deduction_status"] = value_id
+
+                return employee_record_dict
+
+        else:
+            return False
 
 
 def is_none(cell_value):
@@ -145,7 +178,14 @@ def is_none(cell_value):
 
 def validate_field(cell_value, header, employee_record_dict):
     if header == "service number":
+
         if cell_value.isdigit():
+            max_service_number_length = 7
+            service_number_length = len(list(cell_value))
+
+            if service_number_length > max_service_number_length:
+                return "EXCEEDED"
+
             employee_record_dict[header.replace(" ", "_")] = cell_value
             return employee_record_dict
         else:
@@ -165,17 +205,63 @@ def validate_amounts(cell_value, header, employee_record_dict):
         employee_record_dict[header.replace(" ", "_")] = amount
         return employee_record_dict
 
-    else:
-        if header == "outstanding difference":
-            amount = calculate_outstanding_difference(
-                employee_record_dict["total_amount"],
-                employee_record_dict["amount_deducted"],
+
+def select_value(cell_value, header, employee_record_dict):
+    with SessionLocal() as db:
+        if header.lower() == "gender":
+            value = (
+                db.query(Gender)
+                .filter(func.lower(Gender.name) == cell_value.strip().lower())
+                .first()
             )
-            employee_record_dict[header.replace(" ", "_")] = amount
-            return employee_record_dict
-        else:
-            employee_record_dict[header.replace(" ", "_")] = Decimal("0.0000")
-            return employee_record_dict
+            if value:
+                employee_record_dict["gender"] = value.id
+                return employee_record_dict
+            return False
+
+        elif header.lower() == "unit":
+            value = (
+                db.query(Unit)
+                .filter(func.lower(Unit.name) == cell_value.strip().lower())
+                .first()
+            )
+            if value:
+                employee_record_dict["unit"] = value.id
+                return employee_record_dict
+            return False
+
+        elif header.lower() == "grade":
+            value = (
+                db.query(Grade)
+                .filter(func.lower(Grade.name) == cell_value.strip().lower())
+                .first()
+            )
+            if value:
+                employee_record_dict["grade"] = value.id
+                return employee_record_dict
+            return False
+
+        elif header.lower() == "rank":
+            value = (
+                db.query(Rank)
+                .filter(func.lower(Rank.name) == cell_value.strip().lower())
+                .first()
+            )
+            if value:
+                employee_record_dict["rank"] = value.id
+                return employee_record_dict
+            return False
+
+        elif header.lower() == "category":
+            value = (
+                db.query(Category)
+                .filter(func.lower(Category.name) == cell_value.strip().lower())
+                .first()
+            )
+            if value:
+                employee_record_dict["category"] = value.id
+                return employee_record_dict
+            return False
 
 
 def employee_data_info_error(employee_data_info):
