@@ -4,17 +4,15 @@ from src.components.customlabel import CustomLabel
 from src.components.addrecordwindow import AddRecordWindow
 from src.crud.crud_employee_record import (
     save_from_file,
-    retrieve_records,
+    retrieve_random_records,
     retrieve_employee_record,
 )
 from src.database.db import SessionLocal
 import os
-import traceback
-import sys
 from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
-    integrity_error_message,
+    employee_data_info_warning,
 )
 from src.components.workerclass import Worker
 
@@ -175,7 +173,7 @@ class DashboardScreen(QtWidgets.QWidget):
                 "Name",
                 "Unit",
                 "Grade",
-                "Appointment Date",
+                "Amount Deducted",
             ]
         )
         self.employee_table.cellClicked.connect(self.get_service_number_from_cell)
@@ -242,6 +240,18 @@ class DashboardScreen(QtWidgets.QWidget):
 
         self.container_layout.addWidget(self.footer_widget, stretch=1)
 
+    def load_employee_records_table_on_startup(self):
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
+
+        self.load_records_on_startup_worker = Worker(
+            self.retrieve_records_from_database
+        )
+        self.threadpool = QtCore.QThreadPool()
+        self.load_records_on_startup_worker.signals.result.connect(self.display_records)
+        self.load_records_on_startup_worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(self.load_records_on_startup_worker)
+
     def show_employee_record_window(self, response):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
@@ -282,6 +292,15 @@ class DashboardScreen(QtWidgets.QWidget):
         self.get_employee_data_threadpool.start(get_employee_data_worker)
 
     def display_records(self, records):
+        self.loading_indicator.stop()
+        self.loading_indicator_box.setVisible(False)
+
+        if records is None:
+            self.employee_data_info.setVisible(True)
+            self.employee_data_info.setText(f"No records in database.")
+            employee_data_info_warning(self.employee_data_info)
+            return
+
         number_of_rows = len(records)
         number_of_columns = 5
         self.employee_table.setRowCount(number_of_rows)
@@ -294,9 +313,14 @@ class DashboardScreen(QtWidgets.QWidget):
                     "name",
                     "unit",
                     "grade",
-                    "appointment_date",
+                    "total_amount_deducted",
                 ]
-                cell_value = records[row].__dict__.get(headers[column])
+                if headers[column] == "grade":
+                    cell_value = records[row].grade_name
+                elif headers[column] == "unit":
+                    cell_value = records[row].unit_name
+                else:
+                    cell_value = records[row].__dict__.get(headers[column])
 
                 self.employee_table.setItem(
                     row,
@@ -304,12 +328,13 @@ class DashboardScreen(QtWidgets.QWidget):
                     QtWidgets.QTableWidgetItem(str(cell_value)),
                 )
 
+        self.employee_data_info.setVisible(True)
         self.employee_data_info.setText(f"Retrieved {number_of_rows} employee records.")
         employee_data_info_success(self.employee_data_info)
 
     def retrieve_records_from_database(self):
         with SessionLocal() as db:
-            response = retrieve_records(db)
+            response = retrieve_random_records(db)
             return response
 
     def handle_records(self, response):
@@ -330,20 +355,24 @@ class DashboardScreen(QtWidgets.QWidget):
             employee_data_info_success(self.employee_data_info)
 
         # Commence records retrieval from db
-        # self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
 
-        # self.retrieve_records_threadpool = QtCore.QThreadPool()
-        # self.retrieve_records_worker.signals.result.connect(self.display_records)
-        # self.retrieve_records_worker.signals.error.connect(self.handle_error)
-        # self.retrieve_records_threadpool.start(self.retrieve_records_worker)
+        self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
+
+        self.retrieve_records_threadpool = QtCore.QThreadPool()
+        self.retrieve_records_worker.signals.result.connect(self.display_records)
+        self.retrieve_records_worker.signals.error.connect(self.handle_error)
+        self.retrieve_records_threadpool.start(self.retrieve_records_worker)
 
     def handle_error(self, error_tuple):
         exception_type, value, traceback_str = error_tuple
 
-        exception_message = str(value.orig)
-        service_number = value.params[0]
+        # exception_message = str(value.orig)
+        # service_number = value.params[0]
 
-        error_message = integrity_error_message(exception_message, service_number)
+        # error_message = integrity_error_message(exception_message, service_number)
+        error_message = str(value)
 
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
@@ -393,3 +422,4 @@ class DashboardScreen(QtWidgets.QWidget):
         self.setup_buttons_row()
         self.employee_records_table()
         self.footer_area()
+        self.load_employee_records_table_on_startup()

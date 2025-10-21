@@ -288,6 +288,18 @@ def employee_data_info_success(employee_data_info):
     )
 
 
+def employee_data_info_warning(employee_data_info):
+    employee_data_info.setStyleSheet(
+        """
+        background-color: #FFCC00;
+        color: white;
+        font-weight: bold;
+        border-radius: 5;
+        padding: 3;
+        """
+    )
+
+
 def integrity_error_message(error, service_number):
     if "UNIQUE constraint failed: employee_records.service_number" in error:
         return (

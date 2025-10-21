@@ -1,20 +1,18 @@
 import pandas as pd
 from sqlalchemy.orm import Session
-from src.database.models import EmployeeRecord, Employee, Occurrence
-from decimal import Decimal
+from src.database.models import EmployeeRecord, Employee, Occurrence, Grade, Unit
 from src.utils import (
     missing_headers,
-    four_dp_decimal,
     get_date,
     assign_outstanding_amount,
     is_none,
-    integrity_error_message,
     validate_field,
     validate_amounts,
     select_value,
     assign_deduction_status,
 )
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import OperationalError
+from sqlalchemy import func
 
 # TODO: Handle when the Outstanding Difference generates a negative value. This means an employee has been deducted more than the Total Amount to be paid.
 
@@ -69,120 +67,132 @@ def save_from_file(db: Session, file_path: str) -> dict:
             }
 
         else:
-            for row_index in range(len(df)):
 
-                employee_record_dict = employee_record_dict.copy()
+            try:
 
-                for col_index in range(len(df.columns)):
+                for row_index in range(len(df)):
 
-                    header = df.columns[col_index].strip().lower()
-                    cell_value = df.iat[row_index, col_index]
+                    employee_record_dict = employee_record_dict.copy()
 
-                    match header:
-                        case "service number" | "name":
-                            is_empty = is_none(cell_value)
+                    for col_index in range(len(df.columns)):
 
-                            if is_empty:
-                                db.rollback()
-                                return {
-                                    "error": f"{header.capitalize()} must not be empty."
-                                }
-                            else:
-                                result = validate_field(
-                                    cell_value,
-                                    header,
-                                    employee_record_dict,
-                                )
-                                if not result:
+                        header = df.columns[col_index].strip().lower()
+                        cell_value = df.iat[row_index, col_index]
+
+                        match header:
+                            case "service number" | "name":
+                                is_empty = is_none(cell_value)
+
+                                if is_empty:
+                                    # raise OperationalError("Test Operational Error")
                                     db.rollback()
                                     return {
-                                        "error": f"Invalid Service Number: {cell_value} in Service Number column."
-                                    }
-                                elif result == "EXCEEDED":
-                                    return {
-                                        "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits."
+                                        "error": f"{header.capitalize()} must not be empty."
                                     }
                                 else:
-                                    employee_record_dict = result
+                                    result = validate_field(
+                                        cell_value,
+                                        header,
+                                        employee_record_dict,
+                                    )
+                                    if not result:
+                                        db.rollback()
+                                        return {
+                                            "error": f"Invalid Service Number: {cell_value} in Service Number column."
+                                        }
+                                    elif result == "EXCEEDED":
+                                        return {
+                                            "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits."
+                                        }
+                                    else:
+                                        employee_record_dict = result
 
-                        case "gender" | "unit" | "grade" | "rank" | "category":
-                            is_empty = is_none(cell_value)
+                            case "gender" | "unit" | "grade" | "rank" | "category":
+                                is_empty = is_none(cell_value)
 
-                            if is_empty:
-                                db.rollback()
-                                return {
-                                    "error": f"{header.capitalize()} must not be empty."
-                                }
-                            else:
-                                result = select_value(
+                                if is_empty:
+                                    db.rollback()
+                                    return {
+                                        "error": f"{header.capitalize()} must not be empty."
+                                    }
+                                else:
+                                    result = select_value(
+                                        cell_value, header, employee_record_dict
+                                    )
+                                    if not result:
+                                        db.rollback()
+                                        return {
+                                            "error": f"{header.capitalize()}: {cell_value} does not exist in the database."
+                                        }
+                                    else:
+                                        employee_record_dict = result
+
+                            case "uniform price" | "amount deducted":
+
+                                result = validate_amounts(
                                     cell_value, header, employee_record_dict
                                 )
+
                                 if not result:
                                     db.rollback()
                                     return {
-                                        "error": f"{header.capitalize()}: {cell_value} does not exist in the database."
+                                        "error": f"Invalid digits: {cell_value} in {header.capitalize()} column."
                                     }
                                 else:
                                     employee_record_dict = result
 
-                        case "uniform price" | "amount deducted":
-
-                            result = validate_amounts(
-                                cell_value, header, employee_record_dict
-                            )
-
-                            if not result:
-                                db.rollback()
-                                return {
-                                    "error": f"Invalid digits: {cell_value} in {header.capitalize()} column."
-                                }
-                            else:
-                                employee_record_dict = result
-
-                employee_record_dict = assign_outstanding_amount(employee_record_dict)
-                result = assign_deduction_status(employee_record_dict)
-
-                if not result:
-                    db.rollback()
-                    return {
-                        "error": "Uniform Price column must not be empty",
-                    }
-
-                # Create a new employee if does not exist
-                employee = (
-                    db.query(Employee)
-                    .filter(Employee.service_number == result["service_number"])
-                    .first()
-                )
-
-                if employee is None:
-                    employee = Employee(
-                        service_number=result["service_number"],
-                        name=result["name"],
-                        gender_id=result["gender"],
-                        unit_id=result["unit"],
-                        grade_id=result["grade"],
-                        rank_id=result["rank"],
-                        category_id=result["category"],
+                    employee_record_dict = assign_outstanding_amount(
+                        employee_record_dict
                     )
-                    db.add(employee)
-                    db.flush()  # writes to DB, assigns ID, but doesn’t commit yet
+                    result = assign_deduction_status(employee_record_dict)
 
-                # Get created employee id and assign it to employee's occurrence record
-                occurrence = Occurrence(
-                    employee_id=employee.id,
-                    uniform_price=result["uniform_price"],
-                    amount_deducted=result["amount_deducted"],
-                    outstanding_amount=result["outstanding_amount"],
-                    deduction_status_id=result["deduction_status"],
-                )
-                db.add(occurrence)
+                    if not result:
+                        db.rollback()
+                        return {
+                            "error": "Uniform Price column must not be empty",
+                        }
 
-                number_of_records_saved += 1
+                    # Create a new employee if does not exist
+                    employee = (
+                        db.query(Employee)
+                        .filter(Employee.service_number == result["service_number"])
+                        .first()
+                    )
 
-            db.commit()
+                    if employee is None:
+                        employee = Employee(
+                            service_number=result["service_number"],
+                            name=result["name"],
+                            gender_id=result["gender"],
+                            unit_id=result["unit"],
+                            grade_id=result["grade"],
+                            rank_id=result["rank"],
+                            category_id=result["category"],
+                        )
+                        db.add(employee)
+                        db.flush()  # writes to DB, assigns ID, but doesn’t commit yet
 
-            return {"records saved": number_of_records_saved}
+                    # Get created employee id and assign it to employee's occurrence record
+                    occurrence = Occurrence(
+                        employee_id=employee.id,
+                        uniform_price=result["uniform_price"],
+                        amount_deducted=result["amount_deducted"],
+                        outstanding_amount=result["outstanding_amount"],
+                        deduction_status_id=result["deduction_status"],
+                    )
+                    db.add(occurrence)
+
+                    number_of_records_saved += 1
+
+                db.commit()
+
+                return {"records saved": number_of_records_saved}
+
+            except OperationalError as e:
+                if "database is locked" in str(e):
+                    return {
+                        "error": "Please wait a moment and try again - database busy."
+                    }
 
     else:
         return {
@@ -191,8 +201,19 @@ def save_from_file(db: Session, file_path: str) -> dict:
         }
 
 
-def retrieve_records(db: Session) -> list:
-    results = db.query(EmployeeRecord).all()
+def retrieve_random_records(db: Session) -> list:
+    results = db.query(Employee).order_by(func.random()).limit(50).all()
+    print("Results -> ", results)
+    if not results:
+        return None
+
+    for record in results:
+        unit = record.unit.name
+        grade = record.grade.name
+
+        setattr(record, "unit_name", unit)
+        setattr(record, "grade_name", grade)
+
     return results
 
 
