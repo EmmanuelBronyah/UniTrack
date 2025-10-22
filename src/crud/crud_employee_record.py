@@ -142,7 +142,7 @@ def save_from_file(db: Session, file_path: str) -> dict:
                                     employee_record_dict = result
 
                     employee_record_dict = assign_outstanding_amount(
-                        employee_record_dict
+                        employee_record_dict, db
                     )
                     result = assign_deduction_status(employee_record_dict)
 
@@ -151,7 +151,6 @@ def save_from_file(db: Session, file_path: str) -> dict:
                         return {
                             "error": "Uniform Price column must not be empty",
                         }
-
                     # Create a new employee if does not exist
                     employee = (
                         db.query(Employee)
@@ -181,6 +180,7 @@ def save_from_file(db: Session, file_path: str) -> dict:
                         deduction_status_id=result["deduction_status"],
                     )
                     db.add(occurrence)
+                    db.flush()
 
                     number_of_records_saved += 1
 
@@ -203,7 +203,7 @@ def save_from_file(db: Session, file_path: str) -> dict:
 
 def retrieve_random_records(db: Session) -> list:
     results = db.query(Employee).order_by(func.random()).limit(50).all()
-    print("Results -> ", results)
+
     if not results:
         return None
 
@@ -217,15 +217,37 @@ def retrieve_random_records(db: Session) -> list:
     return results
 
 
-def retrieve_employee_record(db: Session, service_number) -> EmployeeRecord | dict:
-    result = (
-        db.query(EmployeeRecord)
-        .filter(EmployeeRecord.service_number == service_number)
-        .first()
-    )
+def retrieve_employee_record(db: Session, service_number) -> dict:
+    employee_data = {}
 
-    if result:
-        return result
+    employee = (
+        db.query(Employee).filter(Employee.service_number == service_number).first()
+    )
+    if employee:
+        unit = employee.unit.name
+        setattr(employee, "unit_name", unit)
+        rank = employee.rank.name
+        setattr(employee, "rank_name", rank)
+        gender = employee.gender.name
+        setattr(employee, "gender_name", gender)
+        grade = employee.grade.name
+        setattr(employee, "grade_name", grade)
+        category = employee.category.name
+        setattr(employee, "category_name", category)
+
+        employee_data["occurrences"] = [
+            setattr(
+                occurrence, "deduction_status_name", occurrence.deduction_status.name
+            )
+            for occurrence in employee.occurrences
+        ]
+        employee_data["employee"] = employee.__dict__
+        employee_data["occurrences"] = [
+            occurrence.__dict__ for occurrence in employee.occurrences
+        ]
+
+        return employee_data
+
     return {
         "error": f"Employee record with Service Number: {service_number} does not exist."
     }

@@ -5,7 +5,16 @@ from decimal import Decimal, ROUND_HALF_UP
 from decimal import InvalidOperation
 from datetime import datetime
 from src.database.db import SessionLocal
-from src.database.models import Gender, Grade, Rank, Category, Unit, DeductionStatus
+from src.database.models import (
+    Gender,
+    Grade,
+    Rank,
+    Category,
+    Unit,
+    DeductionStatus,
+    Employee,
+    Occurrence,
+)
 from sqlalchemy import func
 
 
@@ -106,11 +115,38 @@ def get_date(cell_value):
             return False
 
 
-def assign_outstanding_amount(employee_record_dict):
+def assign_outstanding_amount(employee_record_dict, db):
+    service_number = employee_record_dict["service_number"]
     uniform_price = employee_record_dict["uniform_price"]
-    amount_deducted = employee_record_dict["amount_deducted"]
+    current_amount_deducted = employee_record_dict["amount_deducted"]
 
-    difference = uniform_price - amount_deducted
+    cumulated_deduction = Decimal("0.0000")
+
+    employee = (
+        db.query(Employee).filter(Employee.service_number == service_number).first()
+    )
+
+    if employee:
+
+        employee_id = employee.id
+
+        occurrences = (
+            db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+        )
+
+        if occurrences:
+
+            for occurrence in occurrences:
+                amount_deducted = occurrence.amount_deducted
+                cumulated_deduction += amount_deducted
+
+            cumulated_deduction = cumulated_deduction + current_amount_deducted
+            difference = uniform_price - cumulated_deduction
+            employee_record_dict["outstanding_amount"] = difference
+
+            return employee_record_dict
+
+    difference = uniform_price - current_amount_deducted
     employee_record_dict["outstanding_amount"] = difference
 
     return employee_record_dict
@@ -317,3 +353,54 @@ def deduction_exceeded_warning(deduction_exceeded):
         padding: 3;
         """
     )
+
+
+RANK = ["Junior", "Senior"]
+CATEGORY = [
+    "Artisan",
+    "Chief Yard Foreman",
+    "Driver",
+    "Field Worker",
+    "General",
+    "Labourer",
+    "Medical",
+    "Stores",
+    "Technician",
+    "Warden",
+]
+UNIT = ["5 BN", "4 BN", "6 BN", "37 MIL HOSP", "66 ARTY REGT"]
+GENDER = ["Male", "Female"]
+DEDUCTION_STATUS = ["Full Deduction", "Partial Deduction", "No Deduction"]
+GRADE = [
+    "Programmer",
+    "Senior Executive Officer",
+    "Higher Executive Officer",
+    "Executive Officer",
+    "Pharmacist",
+]
+
+
+def setup_combobox(combobox, role):
+    dropdown_data = {
+        "rank": RANK,
+        "category": CATEGORY,
+        "unit": UNIT,
+        "gender": GENDER,
+        "deduction_status": DEDUCTION_STATUS,
+        "grade": GRADE,
+    }
+
+    match role:
+        case "rank" | "category" | "unit" | "gender" | "deduction_status" | "grade":
+            combobox.addItems(dropdown_data[role])
+            combobox.setEditable(True)
+
+            completer = QtWidgets.QCompleter(dropdown_data[role])
+            completer.setCaseSensitivity(
+                QtCore.Qt.CaseSensitivity(False)
+            )  # Case-insensitive
+            completer.setFilterMode(
+                QtCore.Qt.MatchContains
+            )  # Match text anywhere, not just start
+            combobox.setCompleter(completer)
+            return combobox

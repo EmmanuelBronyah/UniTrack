@@ -23,7 +23,7 @@ def create_db_path():
 db_url = create_db_path()
 
 
-engine = create_engine(db_url, connect_args={"check_same_thread": False}, echo=True)
+engine = create_engine(db_url, connect_args={"check_same_thread": False}, echo=False)
 
 Base = declarative_base()
 

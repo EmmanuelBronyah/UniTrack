@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import resources
 from src.components.customlabel import CustomLabel
-from src.components.addrecordwindow import AddRecordWindow
+from src.components.occurrencewindow import OccurrenceWindow
 from src.crud.crud_employee_record import (
     save_from_file,
     retrieve_random_records,
@@ -256,18 +256,17 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
 
-        if isinstance(response, dict):
+        if "error" in response:
             error = response.get("error", None)
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
         else:
-            employee_record_dict = response.__dict__
             self.employee_data_info.setText(f"Retrieved 1 employee record.")
             employee_data_info_success(self.employee_data_info)
 
-            # show Add Record window
-            self.add_record_window = AddRecordWindow(employee_data=employee_record_dict)
-            self.add_record_window.show()
+            # show occurrence window
+            self.occurrence_window = OccurrenceWindow(employee_data=response)
+            self.occurrence_window.show()
 
     def get_employee_data(self, service_number):
         with SessionLocal() as db:
@@ -296,9 +295,6 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator_box.setVisible(False)
 
         if records is None:
-            self.employee_data_info.setVisible(True)
-            self.employee_data_info.setText(f"No records in database.")
-            employee_data_info_warning(self.employee_data_info)
             return
 
         number_of_rows = len(records)

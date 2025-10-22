@@ -19,8 +19,8 @@ for _ in range(n):
     if service_number in existing_records:
         record = existing_records[service_number].copy()
         # Update only the changing fields
-        record["uniform price"] = 20000
-        record["amount deducted"] = random.choice([200, 100, 300, 400, 50])
+        record["uniform price"] = 2000
+        record["amount deducted"] = random.choice([1000, 2000, 500, 1000, 2000])
     else:
         # Generate a new employee record
         record = {
