@@ -1,14 +1,21 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import resources
 from src.utils import setup_combobox
+from src.components.workerclass import Worker
+from src.database.db import SessionLocal
+from src.crud.crud_employee_record import save_record
+
+# TODO: Since updated at only exists in the Occurrence model, it's value changes only when an occurrence is updated. When an employee instance is updated, the updated at value remains unchanged.
 
 
 class SingleOccurrenceWindow(QtWidgets.QWidget):
-    def __init__(self, occurrence, employee):
+    def __init__(self, occurrence, employee, occurrence_row_id, func):
         super().__init__()
 
         self.occurrence = occurrence
         self.employee = employee
+        self.occurrence_row_id = occurrence_row_id
+        self.update_occurrence_window = func
 
         self.setup_window()
         self.setup_container()
@@ -99,12 +106,12 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         amount_deducted = self.occurrence["amount_deducted"]
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted")
         self.grid_layout.addWidget(self.amount_deducted_label, 2, 2)
-        self.amount_deducted_dropdown = QtWidgets.QLineEdit(text=str(amount_deducted))
-        self.amount_deducted_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.amount_deducted_dropdown.setStyleSheet(
+        self.amount_deducted_textbox = QtWidgets.QLineEdit(text=str(amount_deducted))
+        self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
+        self.amount_deducted_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
-        self.grid_layout.addWidget(self.amount_deducted_dropdown, 2, 3)
+        self.grid_layout.addWidget(self.amount_deducted_textbox, 2, 3)
 
         unit = self.employee["unit_name"]
         self.unit_label = QtWidgets.QLabel("Unit")
@@ -124,7 +131,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
         self.grid_layout.addWidget(self.outstanding_amount_label, 3, 2)
         self.outstanding_amount_textbox = QtWidgets.QLineEdit(
-            text=str(outstanding_amount)
+            readOnly=True, text=str(outstanding_amount)
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
@@ -212,6 +219,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
+        self.save_button.clicked.connect(self.save_updated_record)
         self.grid_layout.addWidget(
             self.save_button, 6, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
@@ -225,8 +233,91 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
+        self.delete_button.clicked.connect(self.delete_record)
         self.grid_layout.addWidget(
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
 
         self.container_layout.addWidget(self.grid_widget)
+
+    def handle_error(self): ...
+
+    def display_updated_values(self, response):
+        occurrences = response.get("occurrences")
+        employee = response.get("employee")
+
+        occurrence_to_display = occurrences[self.occurrence_row_id]
+        self.service_number_textbox.setText(employee.get("service_number"))
+
+        self.name_textbox.setText(employee.get("name"))
+
+        unit_index = self.unit_dropdown.findText(employee.get("unit_name"))
+        self.unit_dropdown.setCurrentIndex(unit_index)
+
+        rank_index = self.rank_dropdown.findText(employee.get("rank_name"))
+        self.rank_dropdown.setCurrentIndex(rank_index)
+
+        gender_index = self.gender_dropdown.findText(employee.get("gender_name"))
+        self.gender_dropdown.setCurrentIndex(gender_index)
+
+        grade_index = self.grade_dropdown.findText(employee.get("grade_name"))
+        self.grade_dropdown.setCurrentIndex(grade_index)
+
+        category_index = self.category_dropdown.findText(employee.get("category_name"))
+        self.category_dropdown.setCurrentIndex(category_index)
+
+        self.uniform_price_textbox.setText(
+            str(occurrence_to_display.get("uniform_price"))
+        )
+
+        self.amount_deducted_textbox.setText(
+            str(occurrence_to_display.get("amount_deducted"))
+        )
+
+        self.outstanding_amount_textbox.setText(
+            str(occurrence_to_display.get("outstanding_amount"))
+        )
+
+        deduction_status_index = self.deduction_status_dropdown.findText(
+            occurrence_to_display.get("deduction_status_name")
+        )
+        self.deduction_status_dropdown.setCurrentIndex(deduction_status_index)
+
+        self.created_at_textbox.setText(str(occurrence_to_display.get("created_at")))
+
+        self.updated_at_textbox.setText(str(occurrence_to_display.get("updated_at")))
+
+        # Update the occurrences in the Occurrence window since one of the occurrences has been modified
+        self.update_occurrence_window(response)
+
+    def update_data(self, updated_employee_data):
+        with SessionLocal() as db:
+            result = save_record(db, updated_employee_data)
+            return result
+
+    def save_updated_record(self):
+        self.updated_employee_record = {
+            "employee_id": self.employee.get("id"),
+            "service_number": self.service_number_textbox.text(),
+            "name": self.name_textbox.text(),
+            "gender": self.gender_dropdown.currentText(),
+            "unit": self.unit_dropdown.currentText(),
+            "grade": self.grade_dropdown.currentText(),
+            "category": self.category_dropdown.currentText(),
+            "rank": self.rank_dropdown.currentText(),
+            "occurrence_id": self.occurrence.get("id"),
+            "uniform_price": self.uniform_price_textbox.text(),
+            "amount_deducted": self.amount_deducted_textbox.text(),
+            "deduction_status": self.deduction_status_dropdown.currentText(),
+        }
+
+        self.save_record_threadpool = QtCore.QThreadPool()
+        self.save_record_worker = Worker(
+            self.update_data,
+            self.updated_employee_record,
+        )
+        self.save_record_worker.signals.result.connect(self.display_updated_values)
+        self.save_record_worker.signals.error.connect(self.handle_error)
+        self.save_record_threadpool.start(self.save_record_worker)
+
+    def delete_record(self): ...

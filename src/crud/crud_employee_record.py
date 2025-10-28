@@ -10,6 +10,8 @@ from src.utils import (
     validate_amounts,
     select_value,
     assign_deduction_status,
+    same_uniform_price,
+    update_outstanding_amount,
 )
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import func
@@ -84,7 +86,6 @@ def save_from_file(db: Session, file_path: str) -> dict:
                                 is_empty = is_none(cell_value)
 
                                 if is_empty:
-                                    # raise OperationalError("Test Operational Error")
                                     db.rollback()
                                     return {
                                         "error": f"{header.capitalize()} must not be empty."
@@ -184,6 +185,13 @@ def save_from_file(db: Session, file_path: str) -> dict:
 
                     number_of_records_saved += 1
 
+                response = same_uniform_price(db)
+                if response is not True:
+                    db.rollback()
+                    return {
+                        "error": f"Different uniform prices {str(response[0]),  str(response[1])} for employee with Service Number ({response[2]})."
+                    }
+
                 db.commit()
 
                 return {"records saved": number_of_records_saved}
@@ -257,25 +265,25 @@ def save_record(db: Session, employee_record: dict):
     employee_record_dict = {
         "service_number": "",
         "name": "",
+        "gender": "",
         "unit": "",
         "grade": "",
-        "appointment_date": "",
-        "total_amount": "",
+        "rank": "",
+        "category": "",
+        "uniform_price": "",
         "amount_deducted": "",
-        "outstanding_difference": "",
-        "full_payment": False,
-        "no_payment": False,
+        "outstanding_amount": "",
+        "deduction_status": "",
     }
     for key, value in employee_record.items():
         key = key.replace("_", " ")
         match key:
-            case "service number" | "name" | "grade" | "unit":
+            case "service number" | "name":
                 is_empty = is_none(value)
 
                 if is_empty:
-                    return {
-                        "error": f"{key.capitalize()} must not be empty.",
-                    }
+                    db.rollback()
+                    return {"error": f"{key.capitalize()} must not be empty."}
                 else:
                     result = validate_field(
                         value,
@@ -283,59 +291,73 @@ def save_record(db: Session, employee_record: dict):
                         employee_record_dict,
                     )
                     if not result:
+                        db.rollback()
                         return {
-                            "error": f"Invalid Service Number ({value}) in Service Number column.",
+                            "error": f"Invalid Service Number: {value} in Service Number column."
+                        }
+                    elif result == "EXCEEDED":
+                        return {
+                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits."
                         }
                     else:
                         employee_record_dict = result
 
-            case "appointment date":
-                if value:
-                    date = get_date(value)
+            case "gender" | "unit" | "grade" | "rank" | "category":
+                is_empty = is_none(value)
 
-                    if not date:
-                        return {
-                            "error": f"Invalid date format ({value}). Date should be in the format 'YYYY-MM-DD'.",
-                        }
-
-                    employee_record_dict[key.replace(" ", "_")] = date
-
+                if is_empty:
+                    db.rollback()
+                    return {"error": f"{key.capitalize()} must not be empty."}
                 else:
-                    employee_record_dict[key.replace(" ", "_")] = None
+                    result = select_value(value, key, employee_record_dict)
+                    if not result:
+                        db.rollback()
+                        return {
+                            "error": f"{key.capitalize()}: {value} does not exist in the database."
+                        }
+                    else:
+                        employee_record_dict = result
 
-            case "total amount" | "amount deducted" | "outstanding difference":
+            case "uniform price" | "amount deducted":
+
                 result = validate_amounts(value, key, employee_record_dict)
 
                 if not result:
+                    db.rollback()
                     return {
-                        "error": f"Invalid digits ({value}) in {key.capitalize()} column.",
+                        "error": f"Invalid digits: {value} in {key.capitalize()} column."
                     }
                 else:
                     employee_record_dict = result
 
-    # employee_record_dict = check_for_no_deductions(employee_record_dict)
-    # employee_record_dict = check_for_full_payment(employee_record_dict)
+    employee_id = employee_record.get("employee_id")
+    occurrence_id = employee_record.get("occurrence_id")
 
-    employee_record_data = EmployeeRecord(**employee_record_dict)
+    employee_record_dict = update_outstanding_amount(
+        employee_record_dict, db, occurrence_id, employee_id
+    )
 
-    employee_id = employee_record.get("id", None)
-    record = db.query(EmployeeRecord).filter_by(id=employee_id).first()
+    result = assign_deduction_status(employee_record_dict)
 
-    if record:
-        record.service_number = employee_record_data.service_number
-        record.name = employee_record_data.name
-        record.unit = employee_record_data.unit
-        record.grade = employee_record_data.grade
-        record.appointment_date = employee_record_data.appointment_date
-        record.total_amount = employee_record_data.total_amount
-        record.amount_deducted = employee_record_data.amount_deducted
-        record.outstanding_difference = employee_record_data.outstanding_difference
-        record.full_payment = employee_record_data.full_payment
-        record.no_payment = employee_record_data.no_payment
+    if not result:
+        db.rollback()
+        return {
+            "error": "Uniform Price column must not be empty",
+        }
 
-        db.commit()
-        db.refresh(record)
+    employee_id = employee_record.get("employee_id")
+    record = db.query(Employee).filter(Employee.id == employee_id).first()
 
-        return record
+    record.service_number = result["service_number"]
+    record.name = result["name"]
+    record.gender_id = result["gender"]
+    record.unit_id = result["unit"]
+    record.grade_id = result["grade"]
+    record.category_id = result["category"]
+    record.rank_id = result["rank"]
 
-    return {"error": "Employee record does not exist."}
+    db.commit()
+    db.refresh(record)
+
+    employee = retrieve_employee_record(db, record.service_number)
+    return employee

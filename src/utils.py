@@ -404,3 +404,80 @@ def setup_combobox(combobox, role):
             )  # Match text anywhere, not just start
             combobox.setCompleter(completer)
             return combobox
+
+
+def calculate_total_amount_deducted(occurrences):
+    total_amount_deducted = Decimal("0.0000")
+
+    for occurrence in occurrences:
+        amount_deducted = occurrence.get("amount_deducted", None)
+        total_amount_deducted += amount_deducted
+
+    return total_amount_deducted
+
+
+def final_occurrence_deduction_status(uniform_price, amount_deducted):
+    difference = uniform_price - amount_deducted
+
+    if amount_deducted.is_zero():
+        return ["No Deduction", difference]
+
+    elif difference.is_zero():
+        return ["Full Deduction", difference]
+
+    elif not difference.is_zero() and not difference.is_signed():
+        return ["Partial Deduction", difference]
+
+    elif not difference.is_zero() and difference.is_signed():
+        return ["Full Deduction", difference]
+
+
+def same_uniform_price(db):
+    employee = db.query(Employee).first()
+    employee_id = employee.id
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    first_uniform_price = occurrences[0].uniform_price
+
+    for occurrence in occurrences:
+        same_price = first_uniform_price == occurrence.uniform_price
+
+        if same_price:
+            continue
+        else:
+            return (
+                first_uniform_price,
+                occurrence.uniform_price,
+                employee.service_number,
+            )
+
+    return True
+
+
+def update_outstanding_amount(employee_record_dict, db, occurrence_id, employee_id):
+    uniform_price = employee_record_dict["uniform_price"]
+    current_amount_deducted = employee_record_dict["amount_deducted"]
+
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    cumulated_deduction = Decimal("0.0000")
+
+    if employee and occurrences:
+        for occurrence in occurrences:
+            occurrence.uniform_price = uniform_price
+
+            if occurrence.id == occurrence_id:
+                occurrence.amount_deducted = current_amount_deducted
+
+            cumulated_deduction += occurrence.amount_deducted
+            difference = uniform_price - cumulated_deduction
+            occurrence.outstanding_amount = difference
+
+            employee_record_dict["outstanding_amount"] = difference
+
+        return employee_record_dict

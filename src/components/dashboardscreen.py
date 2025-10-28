@@ -265,7 +265,9 @@ class DashboardScreen(QtWidgets.QWidget):
             employee_data_info_success(self.employee_data_info)
 
             # show occurrence window
-            self.occurrence_window = OccurrenceWindow(employee_data=response)
+            self.occurrence_window = OccurrenceWindow(
+                employee_data=response, func=self.display_modified_employee_data
+            )
             self.occurrence_window.show()
 
     def get_employee_data(self, service_number):
@@ -277,8 +279,12 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator.start()
         self.loading_indicator_box.setVisible(True)
 
-        column = 0
-        service_number = self.employee_table.item(row, column).text()
+        service_number_column = 0
+        self.row_number_of_employee_clicked = row
+
+        service_number = self.employee_table.item(
+            self.row_number_of_employee_clicked, service_number_column
+        ).text()
 
         get_employee_data_worker = Worker(self.get_employee_data, service_number)
 
@@ -411,6 +417,31 @@ class DashboardScreen(QtWidgets.QWidget):
             save_from_file_worker.signals.error.connect(self.handle_error)
 
             self.save_from_file_threadpool.start(save_from_file_worker)
+
+    def display_modified_employee_data(self, updated_data):
+        number_of_columns = 5
+        row = self.row_number_of_employee_clicked
+
+        for column in range(number_of_columns):
+            headers = [
+                "service_number",
+                "name",
+                "unit",
+                "grade",
+                "total_amount_deducted",
+            ]
+            if headers[column] == "grade":
+                cell_value = updated_data["grade_name"]
+            elif headers[column] == "unit":
+                cell_value = updated_data["unit_name"]
+            else:
+                cell_value = updated_data[headers[column]]
+
+            self.employee_table.setItem(
+                row,
+                column,
+                QtWidgets.QTableWidgetItem(str(cell_value)),
+            )
 
     def setup_dashboard_screen(self):
         self.setup_container()

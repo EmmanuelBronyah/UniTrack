@@ -54,8 +54,8 @@ for _ in range(n):
                     "Warden",
                 ]
             ),
-            "uniform price": 20000,
-            "amount deducted": random.choice([200, 100, 300, 400, 50]),
+            "uniform price": 2000,
+            "amount deducted": random.choice([1000, 2000, 500, 1000, 2000]),
         }
         # Save this record for possible reuse later
         existing_records[service_number] = record.copy()
