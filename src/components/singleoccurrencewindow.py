@@ -3,19 +3,20 @@ import resources
 from src.utils import setup_combobox
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
-from src.crud.crud_employee_record import save_record
+from src.crud.crud_employee_record import save_record, delete_record
 
 # TODO: Since updated at only exists in the Occurrence model, it's value changes only when an occurrence is updated. When an employee instance is updated, the updated at value remains unchanged.
 
 
 class SingleOccurrenceWindow(QtWidgets.QWidget):
-    def __init__(self, occurrence, employee, occurrence_row_id, func):
+    def __init__(self, occurrence, employee, occurrence_row_id, func, func_2):
         super().__init__()
 
         self.occurrence = occurrence
         self.employee = employee
         self.occurrence_row_id = occurrence_row_id
         self.update_occurrence_window = func
+        self.update_occurrences_and_remove_occurrence = func_2
 
         self.setup_window()
         self.setup_container()
@@ -320,4 +321,33 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.save_record_worker.signals.error.connect(self.handle_error)
         self.save_record_threadpool.start(self.save_record_worker)
 
-    def delete_record(self): ...
+    def initiate_occurrence_record_removal(self, response):
+        if response == "DELETED LAST OCCURRENCE AND ASSOCIATED EMPLOYEE":
+            self.update_occurrences_and_remove_occurrence(
+                response,
+                self.occurrence_row_id,
+                self.employee.get("id"),
+                True,
+            )
+        else:
+            self.update_occurrences_and_remove_occurrence(
+                response,
+                self.occurrence_row_id,
+                self.employee.get("id"),
+                False,
+            )
+
+    def delete_occurrence(self):
+        with SessionLocal() as db:
+            result = delete_record(
+                db, self.occurrence.get("id"), self.employee.get("id")
+            )
+            return result
+
+    def delete_record(self):
+        self.delete_record_threadpool = QtCore.QThreadPool()
+        self.delete_record_worker = Worker(self.delete_occurrence)
+        self.delete_record_worker.signals.result.connect(
+            self.initiate_occurrence_record_removal
+        )
+        self.delete_record_threadpool.start(self.delete_record_worker)

@@ -266,7 +266,9 @@ class DashboardScreen(QtWidgets.QWidget):
 
             # show occurrence window
             self.occurrence_window = OccurrenceWindow(
-                employee_data=response, func=self.display_modified_employee_data
+                employee_data=response,
+                func=self.display_modified_employee_data,
+                func_2=self.remove_employee_from_table,
             )
             self.occurrence_window.show()
 
@@ -442,6 +444,10 @@ class DashboardScreen(QtWidgets.QWidget):
                 column,
                 QtWidgets.QTableWidgetItem(str(cell_value)),
             )
+
+    def remove_employee_from_table(self):
+        self.occurrence_window.close()
+        self.employee_table.removeRow(self.row_number_of_employee_clicked)
 
     def setup_dashboard_screen(self):
         self.setup_container()

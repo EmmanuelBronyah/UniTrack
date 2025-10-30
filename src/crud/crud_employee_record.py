@@ -261,7 +261,7 @@ def retrieve_employee_record(db: Session, service_number) -> dict:
     }
 
 
-def save_record(db: Session, employee_record: dict):
+def save_record(db: Session, employee_record: dict) -> dict:
     employee_record_dict = {
         "service_number": "",
         "name": "",
@@ -361,3 +361,33 @@ def save_record(db: Session, employee_record: dict):
 
     employee = retrieve_employee_record(db, record.service_number)
     return employee
+
+
+def delete_record(db: Session, occurrence_id: int, employee_id: int) -> str | bool:
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+
+    occurrence = db.query(Occurrence).filter(Occurrence.id == occurrence_id).first()
+    all_occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    number_of_occurrences = len(all_occurrences)
+
+    if number_of_occurrences == 1:
+
+        if occurrence:
+
+            db.delete(occurrence)
+            db.delete(employee)
+
+            db.commit()
+
+            return "DELETED LAST OCCURRENCE AND ASSOCIATED EMPLOYEE"
+    else:
+
+        if occurrence:
+
+            db.delete(occurrence)
+            db.commit()
+
+            return True

@@ -481,3 +481,26 @@ def update_outstanding_amount(employee_record_dict, db, occurrence_id, employee_
             employee_record_dict["outstanding_amount"] = difference
 
         return employee_record_dict
+
+
+def recalculate_outstanding_amount_after_deletion(db, employee_id):
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    service_number = employee.service_number
+
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    cumulated_deduction = Decimal("0.0000")
+
+    if occurrences:
+
+        for occurrence in occurrences:
+            amount_deducted = occurrence.amount_deducted
+            cumulated_deduction += amount_deducted
+            outstanding_amount = occurrence.uniform_price - cumulated_deduction
+            occurrence.outstanding_amount = outstanding_amount
+
+        db.commit()
+
+    return service_number
