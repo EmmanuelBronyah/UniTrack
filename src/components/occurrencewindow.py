@@ -13,6 +13,7 @@ from src.utils import (
     calculate_total_amount_deducted,
     final_occurrence_deduction_status,
     recalculate_outstanding_amount_after_deletion,
+    is_exceeded_deduction,
 )
 
 
@@ -75,8 +76,26 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
             """
         )
 
+        self.exceeded_deduction_label = QtWidgets.QLabel("Exceeded Deduction")
+        self.exceeded_deduction_label.setFixedSize(QtCore.QSize(200, 40))
+        self.exceeded_deduction_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.exceeded_deduction_label.setStyleSheet(
+            """
+                background-color: #dc3545;
+                padding: 0 10 0 10;
+                color: #3B3B3B; 
+                font-weight: bold; 
+                border-radius: 10;
+                color: white;
+            """
+        )
+        self.exceeded_deduction_label.setVisible(False)
+
         self.top_row_layout.addWidget(
             self.occurrence_text, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        )
+        self.top_row_layout.addWidget(
+            self.exceeded_deduction_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
 
         self.container_layout.addWidget(self.top_row_widget, stretch=1)
@@ -324,6 +343,9 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                     QtWidgets.QTableWidgetItem(str(cell_value)),
                 )
 
+        # Show the Exceeded Deduction label if deductions have exceeded
+        self.check_exceeded_deduction()
+
     def open_single_occurrence_window(self, row, column):
         occurrence_clicked = self.employee_data["occurrences"][row]
         employee_clicked = self.employee_data["employee"]
@@ -437,6 +459,9 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.deduction_status_input.setText(self.deduction_status[0])
 
+        # Show the Exceeded Deduction label if deductions have exceeded
+        self.check_exceeded_deduction()
+
         # Update employee data on the dashboard
         self.update_employee_data_on_dashboard(updated_data["employee"])
 
@@ -459,13 +484,14 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                 final_occurrence_deduction_status_after_occurrence_deletion[0]
             )
 
+            # Show the Exceeded Deduction label if deductions have exceeded
+            self.check_exceeded_deduction()
+
     def initiate_outstanding_amount_recalculation(self, employee_id):
         with SessionLocal() as db:
             service_number = recalculate_outstanding_amount_after_deletion(
                 db, employee_id
             )
-
-            print("Service number -> ", service_number)
 
             if service_number:
                 employee_data = retrieve_employee_record(db, service_number)
@@ -492,3 +518,26 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                     self.show_updated_occurrences_after_deletion
                 )
                 self.threadpool.start(self.worker)
+
+    def display_exceeded_deduction_label(self, response):
+        if response == "EXCEEDED DEDUCTION":
+            self.exceeded_deduction_label.setVisible(True)
+        else:
+            self.exceeded_deduction_label.setVisible(False)
+
+    def initiate_verify_exceeded_deduction(self, employee_id):
+        with SessionLocal() as db:
+            result = is_exceeded_deduction(db, employee_id)
+            return result
+
+    def check_exceeded_deduction(self):
+        employee_id = self.employee_data["employee"]["id"]
+
+        self.exceeded_deduction_threadpool = QtCore.QThreadPool()
+        self.exceeded_deduction_worker = Worker(
+            self.initiate_verify_exceeded_deduction, employee_id
+        )
+        self.exceeded_deduction_worker.signals.result.connect(
+            self.display_exceeded_deduction_label
+        )
+        self.exceeded_deduction_threadpool.start(self.exceeded_deduction_worker)

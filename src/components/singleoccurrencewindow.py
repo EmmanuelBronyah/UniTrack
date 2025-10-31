@@ -1,6 +1,10 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import resources
-from src.utils import setup_combobox
+from src.utils import (
+    setup_combobox,
+    employee_data_info_error,
+    employee_data_info_success,
+)
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
 from src.crud.crud_employee_record import save_record, delete_record
@@ -41,10 +45,11 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
     def setup_form_widgets(self):
         self.grid_widget = QtWidgets.QWidget()
-        self.grid_widget.setContentsMargins(0, 0, 0, 0)
+        self.grid_widget.setContentsMargins(0, 10, 0, 0)
 
         self.grid_layout = QtWidgets.QGridLayout(self.grid_widget)
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
+        self.grid_layout.setVerticalSpacing(15)
 
         service_number = self.employee["service_number"]
         self.service_number_label = QtWidgets.QLabel("Service Number")
@@ -239,11 +244,54 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
 
-        self.container_layout.addWidget(self.grid_widget)
+        self.loading_info_area_widget = QtWidgets.QWidget()
+        self.loading_info_area_widget.setContentsMargins(0, 0, 0, 0)
+        self.loading_info_area_layout = QtWidgets.QHBoxLayout(
+            self.loading_info_area_widget
+        )
+        self.loading_info_area_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.info_label = QtWidgets.QLabel("This is information")
+        self.info_label.wordWrap()
+        self.info_label.setVisible(False)
+        self.loading_info_area_layout.addWidget(
+            self.info_label, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        )
+
+        self.loading_indicator_box = QtWidgets.QLabel()
+        self.loading_indicator_box.setFixedSize(45, 45)
+        self.loading_indicator = QtGui.QMovie(":/assets/icons/spinner-gif")
+        self.loading_indicator.setScaledSize(self.loading_indicator_box.size())
+        self.loading_indicator_box.setMovie(self.loading_indicator)
+        self.loading_indicator_box.setVisible(False)
+        self.loading_indicator.stop()
+        self.loading_info_area_layout.addWidget(
+            self.loading_indicator_box, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
+
+        self.container_layout.addWidget(self.grid_widget, stretch=2)
+        self.container_layout.addWidget(
+            self.loading_info_area_widget,
+            stretch=1,
+        )
 
     def handle_error(self): ...
 
     def display_updated_values(self, response):
+        self.loading_indicator_box.setVisible(False)
+        self.loading_indicator.stop()
+
+        if "error" in response:
+            error = response.get("error")
+            self.info_label.setText(str(error))
+            employee_data_info_error(self.info_label)
+            self.info_label.setVisible(True)
+            return
+
+        self.info_label.setText("Record saved.")
+        employee_data_info_success(self.info_label)
+        self.info_label.setVisible(True)
+
         occurrences = response.get("occurrences")
         employee = response.get("employee")
 
@@ -297,6 +345,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             return result
 
     def save_updated_record(self):
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
+
         self.updated_employee_record = {
             "employee_id": self.employee.get("id"),
             "service_number": self.service_number_textbox.text(),

@@ -504,3 +504,23 @@ def recalculate_outstanding_amount_after_deletion(db, employee_id):
         db.commit()
 
     return service_number
+
+
+def is_exceeded_deduction(db, employee_id):
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+    uniform_price = occurrences[0].uniform_price
+
+    cumulated_deduction = Decimal("0.0000")
+
+    for occurrence in occurrences:
+        amount_deducted = occurrence.amount_deducted
+        cumulated_deduction += amount_deducted
+
+    outstanding_amount = uniform_price - cumulated_deduction
+
+    if outstanding_amount.is_signed():
+        return "EXCEEDED DEDUCTION"
+
+    return False

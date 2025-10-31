@@ -13,6 +13,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.setup_window()
         self.setup_container()
         self.setup_form_widgets()
+        self.check_exceeded_deduction()
 
     def setup_window(self):
         self.setFixedSize(QtCore.QSize(710, 410))
@@ -108,11 +109,11 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.unit_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.unit_textbox, 3, 1)
 
-        outstanding_amount = self.occurrence["outstanding_amount"]
+        self.outstanding_amount = self.occurrence["outstanding_amount"]
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
         self.grid_layout.addWidget(self.outstanding_amount_label, 3, 2)
         self.outstanding_amount_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(outstanding_amount)
+            readOnly=True, text=str(self.outstanding_amount)
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
@@ -148,4 +149,25 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.rank_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.rank_textbox, 5, 1)
 
+        self.exceeded_deduction_label = QtWidgets.QLabel("Exceeded Deduction")
+        self.exceeded_deduction_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.exceeded_deduction_label.setStyleSheet(
+            """
+                background-color: #dc3545;
+                padding: 0 10 0 10;
+                color: #3B3B3B; 
+                font-weight: bold; 
+                border-radius: 10;
+                color: white;
+            """
+        )
+        self.exceeded_deduction_label.setVisible(False)
+        self.grid_layout.addWidget(self.exceeded_deduction_label, 5, 3)
+
         self.container_layout.addWidget(self.grid_widget)
+
+    def check_exceeded_deduction(self):
+        if self.outstanding_amount.is_signed():
+            self.exceeded_deduction_label.setVisible(True)
+        else:
+            self.exceeded_deduction_label.setVisible(False)
