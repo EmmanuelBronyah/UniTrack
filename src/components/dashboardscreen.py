@@ -15,6 +15,7 @@ from src.utils import (
     employee_data_info_warning,
 )
 from src.components.workerclass import Worker
+from src.components.addrecordwindow import AddRecordWindow
 
 
 class DashboardScreen(QtWidgets.QWidget):
@@ -100,6 +101,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.add_record_button = QtWidgets.QPushButton("Add record")
         self.add_record_button.setFixedHeight(40)
         self.add_record_button.setFixedWidth(120)
+        self.add_record_button.clicked.connect(self.open_add_record_window)
         self.add_record_button.setStyleSheet(
             """
                 background-color: #8B4513;
@@ -448,6 +450,10 @@ class DashboardScreen(QtWidgets.QWidget):
     def remove_employee_from_table(self):
         self.occurrence_window.close()
         self.employee_table.removeRow(self.row_number_of_employee_clicked)
+
+    def open_add_record_window(self):
+        self.add_record_window = AddRecordWindow()
+        self.add_record_window.show()
 
     def setup_dashboard_screen(self):
         self.setup_container()

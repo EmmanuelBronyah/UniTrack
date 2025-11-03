@@ -10,15 +10,9 @@ from src.database.db import SessionLocal
 from src.crud.crud_employee_record import save_record, delete_record
 
 
-class SingleOccurrenceWindow(QtWidgets.QWidget):
-    def __init__(self, occurrence, employee, occurrence_row_id, func, func_2):
+class AddRecordWindow(QtWidgets.QWidget):
+    def __init__(self):
         super().__init__()
-
-        self.occurrence = occurrence
-        self.employee = employee
-        self.occurrence_row_id = occurrence_row_id
-        self.update_occurrence_window = func
-        self.update_occurrences_and_remove_occurrence = func_2
 
         self.setup_window()
         self.setup_container()
@@ -49,24 +43,22 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
         self.grid_layout.setVerticalSpacing(15)
 
-        service_number = self.employee["service_number"]
         self.service_number_label = QtWidgets.QLabel("Service Number")
         self.grid_layout.addWidget(self.service_number_label, 0, 0)
-        self.service_number_textbox = QtWidgets.QLineEdit(text=service_number)
+        self.service_number_textbox = QtWidgets.QLineEdit()
         self.service_number_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.service_number_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
         self.grid_layout.addWidget(self.service_number_textbox, 0, 1)
 
-        category = self.employee["category_name"]
         self.category_label = QtWidgets.QLabel("Category")
         self.grid_layout.addWidget(self.category_label, 0, 2)
         self.category_dropdown = QtWidgets.QComboBox()
         self.category_dropdown = setup_combobox(self.category_dropdown, "category")
 
         # Setting initial category value
-        index = self.category_dropdown.findText(category)
+        index = self.category_dropdown.findText("")
         self.category_dropdown.setCurrentIndex(index)
 
         self.category_dropdown.setFixedSize(QtCore.QSize(195, 35))
@@ -75,89 +67,79 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.grid_layout.addWidget(self.category_dropdown, 0, 3)
 
-        name = self.employee["name"]
         self.name_label = QtWidgets.QLabel("Name")
         self.grid_layout.addWidget(self.name_label, 1, 0)
-        self.name_textbox = QtWidgets.QLineEdit(text=name)
+        self.name_textbox = QtWidgets.QLineEdit()
         self.name_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.name_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
-        uniform_price = self.occurrence["uniform_price"]
         self.uniform_price_label = QtWidgets.QLabel("Uniform Price")
         self.grid_layout.addWidget(self.uniform_price_label, 1, 2)
-        self.uniform_price_textbox = QtWidgets.QLineEdit(text=str(uniform_price))
+        self.uniform_price_textbox = QtWidgets.QLineEdit()
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
         self.grid_layout.addWidget(self.uniform_price_textbox, 1, 3)
 
-        gender = self.employee["gender_name"]
         self.gender_label = QtWidgets.QLabel("Gender")
         self.grid_layout.addWidget(self.gender_label, 2, 0)
         self.gender_dropdown = QtWidgets.QComboBox()
         self.gender_dropdown = setup_combobox(self.gender_dropdown, "gender")
 
         # Setting initial gender value
-        index = self.gender_dropdown.findText(gender)
+        index = self.gender_dropdown.findText("")
         self.gender_dropdown.setCurrentIndex(index)
 
         self.gender_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.gender_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.gender_dropdown, 2, 1)
 
-        amount_deducted = self.occurrence["amount_deducted"]
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted")
         self.grid_layout.addWidget(self.amount_deducted_label, 2, 2)
-        self.amount_deducted_textbox = QtWidgets.QLineEdit(text=str(amount_deducted))
+        self.amount_deducted_textbox = QtWidgets.QLineEdit()
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
         self.grid_layout.addWidget(self.amount_deducted_textbox, 2, 3)
 
-        unit = self.employee["unit_name"]
         self.unit_label = QtWidgets.QLabel("Unit")
         self.grid_layout.addWidget(self.unit_label, 3, 0)
         self.unit_dropdown = QtWidgets.QComboBox()
         self.unit_dropdown = setup_combobox(self.unit_dropdown, "unit")
 
         # Setting initial unit value
-        index = self.unit_dropdown.findText(unit)
+        index = self.unit_dropdown.findText("")
         self.unit_dropdown.setCurrentIndex(index)
 
         self.unit_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.unit_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.unit_dropdown, 3, 1)
 
-        outstanding_amount = self.occurrence["outstanding_amount"]
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
         self.grid_layout.addWidget(self.outstanding_amount_label, 3, 2)
-        self.outstanding_amount_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(outstanding_amount)
-        )
+        self.outstanding_amount_textbox = QtWidgets.QLineEdit(readOnly=True)
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
         self.grid_layout.addWidget(self.outstanding_amount_textbox, 3, 3)
 
-        grade = self.employee["grade_name"]
         self.grade_label = QtWidgets.QLabel("Grade")
         self.grid_layout.addWidget(self.grade_label, 4, 0)
         self.grade_dropdown = QtWidgets.QComboBox()
         self.grade_dropdown = setup_combobox(self.grade_dropdown, "grade")
 
         # Setting initial grade value
-        index = self.grade_dropdown.findText(grade)
+        index = self.grade_dropdown.findText("")
         self.grade_dropdown.setCurrentIndex(index)
 
         self.grade_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.grade_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.grade_dropdown, 4, 1)
 
-        deduction_status = self.occurrence["deduction_status_name"]
         self.deduction_status_label = QtWidgets.QLabel("Deduction Status")
         self.grid_layout.addWidget(self.deduction_status_label, 4, 2)
         self.deduction_status_dropdown = QtWidgets.QComboBox()
@@ -166,7 +148,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
 
         # Setting retrieved value
-        index = self.deduction_status_dropdown.findText(deduction_status)
+        index = self.deduction_status_dropdown.findText("")
         self.deduction_status_dropdown.setCurrentIndex(index)
 
         self.deduction_status_dropdown.setFixedSize(QtCore.QSize(195, 35))
@@ -175,38 +157,31 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.grid_layout.addWidget(self.deduction_status_dropdown, 4, 3)
 
-        rank = self.employee["rank_name"]
         self.rank_label = QtWidgets.QLabel("Rank")
         self.grid_layout.addWidget(self.rank_label, 5, 0)
         self.rank_dropdown = QtWidgets.QComboBox()
         self.rank_dropdown = setup_combobox(self.rank_dropdown, "rank")
 
         # Setting initial rank value
-        index = self.rank_dropdown.findText(rank)
+        index = self.rank_dropdown.findText("")
         self.rank_dropdown.setCurrentIndex(index)
 
         self.rank_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.rank_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.rank_dropdown, 5, 1)
 
-        updated_at = self.occurrence["updated_at"]
         self.updated_at_label = QtWidgets.QLabel("Updated At")
         self.grid_layout.addWidget(self.updated_at_label, 5, 2)
-        self.updated_at_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(updated_at)
-        )
+        self.updated_at_textbox = QtWidgets.QLineEdit(readOnly=True)
         self.updated_at_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.updated_at_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
         )
         self.grid_layout.addWidget(self.updated_at_textbox, 5, 3)
 
-        created_at = self.occurrence["created_at"]
         self.created_at_label = QtWidgets.QLabel("Created At")
         self.grid_layout.addWidget(self.created_at_label, 6, 0)
-        self.created_at_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(created_at)
-        )
+        self.created_at_textbox = QtWidgets.QLineEdit(readOnly=True)
         self.created_at_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.created_at_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
@@ -223,7 +198,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
-        self.save_button.clicked.connect(self.save_updated_record)
+        # self.save_button.clicked.connect(self.save_updated_record)
         self.grid_layout.addWidget(
             self.save_button, 6, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
@@ -237,7 +212,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
-        self.delete_button.clicked.connect(self.delete_record)
+        # self.delete_button.clicked.connect(self.delete_record)
         self.grid_layout.addWidget(
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
@@ -272,132 +247,3 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             self.loading_info_area_widget,
             stretch=1,
         )
-
-    def handle_error(self): ...
-
-    def display_updated_values(self, response):
-        self.loading_indicator_box.setVisible(False)
-        self.loading_indicator.stop()
-
-        if "error" in response:
-            error = response.get("error")
-            self.info_label.setText(str(error))
-            employee_data_info_error(self.info_label)
-            self.info_label.setVisible(True)
-            return
-
-        self.info_label.setText("Record saved.")
-        employee_data_info_success(self.info_label)
-        self.info_label.setVisible(True)
-
-        occurrences = response.get("occurrences")
-        employee = response.get("employee")
-
-        occurrence_to_display = occurrences[self.occurrence_row_id]
-
-        self.service_number_textbox.setText(employee.get("service_number"))
-
-        self.name_textbox.setText(employee.get("name"))
-
-        unit_index = self.unit_dropdown.findText(employee.get("unit_name"))
-        self.unit_dropdown.setCurrentIndex(unit_index)
-
-        rank_index = self.rank_dropdown.findText(employee.get("rank_name"))
-        self.rank_dropdown.setCurrentIndex(rank_index)
-
-        gender_index = self.gender_dropdown.findText(employee.get("gender_name"))
-        self.gender_dropdown.setCurrentIndex(gender_index)
-
-        grade_index = self.grade_dropdown.findText(employee.get("grade_name"))
-        self.grade_dropdown.setCurrentIndex(grade_index)
-
-        category_index = self.category_dropdown.findText(employee.get("category_name"))
-        self.category_dropdown.setCurrentIndex(category_index)
-
-        self.uniform_price_textbox.setText(
-            str(occurrence_to_display.get("uniform_price"))
-        )
-
-        self.amount_deducted_textbox.setText(
-            str(occurrence_to_display.get("amount_deducted"))
-        )
-
-        self.outstanding_amount_textbox.setText(
-            str(occurrence_to_display.get("outstanding_amount"))
-        )
-
-        deduction_status_index = self.deduction_status_dropdown.findText(
-            occurrence_to_display.get("deduction_status_name")
-        )
-        self.deduction_status_dropdown.setCurrentIndex(deduction_status_index)
-
-        self.created_at_textbox.setText(str(occurrence_to_display.get("created_at")))
-
-        self.updated_at_textbox.setText(str(occurrence_to_display.get("updated_at")))
-
-        # Update the occurrences in the Occurrence window since one of the occurrences has been modified
-        self.update_occurrence_window(response)
-
-    def update_data(self, updated_employee_data):
-        with SessionLocal() as db:
-            result = save_record(db, updated_employee_data)
-            return result
-
-    def save_updated_record(self):
-        self.loading_indicator.start()
-        self.loading_indicator_box.setVisible(True)
-
-        self.updated_employee_record = {
-            "employee_id": self.employee.get("id"),
-            "service_number": self.service_number_textbox.text(),
-            "name": self.name_textbox.text(),
-            "gender": self.gender_dropdown.currentText(),
-            "unit": self.unit_dropdown.currentText(),
-            "grade": self.grade_dropdown.currentText(),
-            "category": self.category_dropdown.currentText(),
-            "rank": self.rank_dropdown.currentText(),
-            "occurrence_id": self.occurrence.get("id"),
-            "uniform_price": self.uniform_price_textbox.text(),
-            "amount_deducted": self.amount_deducted_textbox.text(),
-            "deduction_status": self.deduction_status_dropdown.currentText(),
-        }
-
-        self.save_record_threadpool = QtCore.QThreadPool()
-        self.save_record_worker = Worker(
-            self.update_data,
-            self.updated_employee_record,
-        )
-        self.save_record_worker.signals.result.connect(self.display_updated_values)
-        self.save_record_worker.signals.error.connect(self.handle_error)
-        self.save_record_threadpool.start(self.save_record_worker)
-
-    def initiate_occurrence_record_removal(self, response):
-        if response == "DELETED LAST OCCURRENCE AND ASSOCIATED EMPLOYEE":
-            self.update_occurrences_and_remove_occurrence(
-                response,
-                self.occurrence_row_id,
-                self.employee.get("id"),
-                True,
-            )
-        else:
-            self.update_occurrences_and_remove_occurrence(
-                response,
-                self.occurrence_row_id,
-                self.employee.get("id"),
-                False,
-            )
-
-    def delete_occurrence(self):
-        with SessionLocal() as db:
-            result = delete_record(
-                db, self.occurrence.get("id"), self.employee.get("id")
-            )
-            return result
-
-    def delete_record(self):
-        self.delete_record_threadpool = QtCore.QThreadPool()
-        self.delete_record_worker = Worker(self.delete_occurrence)
-        self.delete_record_worker.signals.result.connect(
-            self.initiate_occurrence_record_removal
-        )
-        self.delete_record_threadpool.start(self.delete_record_worker)

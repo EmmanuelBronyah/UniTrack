@@ -12,13 +12,10 @@ from src.utils import (
     assign_deduction_status,
     same_uniform_price,
     update_outstanding_amount,
+    update_deduction_status,
 )
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import func
-
-# TODO: Handle when the Outstanding Difference generates a negative value. This means an employee has been deducted more than the Total Amount to be paid.
-
-# TODO: When data from a file is imported, check service numbers in the data against the service numbers in the database and generate a prompt asking if the existing employee data in the database is to be replaced by the employee data being imported.
 
 
 def save_from_file(db: Session, file_path: str) -> dict:
@@ -210,7 +207,7 @@ def save_from_file(db: Session, file_path: str) -> dict:
 
 
 def retrieve_random_records(db: Session) -> list:
-    results = db.query(Employee).order_by(func.random()).limit(50).all()
+    results = db.query(Employee).order_by(func.random()).limit(10).all()
 
     if not results:
         return None
@@ -337,7 +334,7 @@ def save_record(db: Session, employee_record: dict) -> dict:
         employee_record_dict, db, occurrence_id, employee_id
     )
 
-    result = assign_deduction_status(employee_record_dict)
+    result = update_deduction_status(db, occurrence_id, employee_record_dict)
 
     if not result:
         db.rollback()

@@ -520,7 +520,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                 self.threadpool.start(self.worker)
 
     def display_exceeded_deduction_label(self, response):
-        if response == "EXCEEDED DEDUCTION":
+        if response:
             self.exceeded_deduction_label.setVisible(True)
         else:
             self.exceeded_deduction_label.setVisible(False)

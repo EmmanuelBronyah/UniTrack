@@ -157,7 +157,6 @@ def assign_deduction_status(employee_record_dict):
         uniform_price = employee_record_dict["uniform_price"]
         amount_deducted = employee_record_dict["amount_deducted"]
         difference = uniform_price - amount_deducted
-
         if not uniform_price.is_zero():
 
             if amount_deducted.is_zero():
@@ -206,6 +205,63 @@ def assign_deduction_status(employee_record_dict):
 
         else:
             return False
+
+
+def update_deduction_status(db, occurrence_id, employee_record_dict):
+    occurrence = db.query(Occurrence).filter(Occurrence.id == occurrence_id).first()
+    uniform_price = occurrence.uniform_price
+    amount_deducted = occurrence.amount_deducted
+    difference = uniform_price - amount_deducted
+
+    if not uniform_price.is_zero():
+
+        if amount_deducted.is_zero():
+            value_id = (
+                db.query(DeductionStatus)
+                .filter(func.lower(DeductionStatus.name) == "no deduction")
+                .first()
+                .id
+            )
+            occurrence.deduction_status_id = value_id
+            employee_record_dict["deduction_status"] = value_id
+
+            return employee_record_dict
+
+        elif difference.is_zero():
+            value_id = (
+                db.query(DeductionStatus)
+                .filter(func.lower(DeductionStatus.name) == "full deduction")
+                .first()
+                .id
+            )
+            occurrence.deduction_status_id = value_id
+            employee_record_dict["deduction_status"] = value_id
+
+            return employee_record_dict
+
+        elif not difference.is_zero() and not difference.is_signed():
+            value_id = (
+                db.query(DeductionStatus)
+                .filter(func.lower(DeductionStatus.name) == "partial deduction")
+                .first()
+                .id
+            )
+            occurrence.deduction_status_id = value_id
+            employee_record_dict["deduction_status"] = value_id
+
+            return employee_record_dict
+
+        elif not difference.is_zero() and difference.is_signed():
+            value_id = (
+                db.query(DeductionStatus)
+                .filter(func.lower(DeductionStatus.name) == "full deduction")
+                .first()
+                .id
+            )
+            occurrence.deduction_status_id = value_id
+            employee_record_dict["deduction_status"] = value_id
+
+            return employee_record_dict
 
 
 def is_none(cell_value):
@@ -521,6 +577,6 @@ def is_exceeded_deduction(db, employee_id):
     outstanding_amount = uniform_price - cumulated_deduction
 
     if outstanding_amount.is_signed():
-        return "EXCEEDED DEDUCTION"
+        return True
 
     return False
