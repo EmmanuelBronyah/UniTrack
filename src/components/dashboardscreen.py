@@ -452,8 +452,11 @@ class DashboardScreen(QtWidgets.QWidget):
         self.employee_table.removeRow(self.row_number_of_employee_clicked)
 
     def open_add_record_window(self):
-        self.add_record_window = AddRecordWindow()
+        self.add_record_window = AddRecordWindow(self.close_add_record_window)
         self.add_record_window.show()
+
+    def close_add_record_window(self):
+        self.add_record_window.close()
 
     def setup_dashboard_screen(self):
         self.setup_container()

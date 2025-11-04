@@ -370,15 +370,17 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         }
 
         # Re-calculate Total Amount Deducted, Outstanding Amount & Deduction Status that is to be displayed when final occurrence window is opened
+        uniform_price = employee_data["occurrences"][0]["uniform_price"]
+
         total_amount_deducted = calculate_total_amount_deducted(
             employee_data["occurrences"]
         )
         deduction_status = final_occurrence_deduction_status(
-            self.uniform_price, total_amount_deducted
+            uniform_price, total_amount_deducted
         )
 
         final_occurrence_dict = {
-            "uniform_price": str(employee_data["occurrences"][0]["uniform_price"]),
+            "uniform_price": str(uniform_price),
             "amount_deducted": str(total_amount_deducted),
             "outstanding_amount": deduction_status[1],
             "deduction_status": deduction_status[0],
@@ -441,7 +443,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.name_input.setText(self.employee_data["employee"]["name"])
         self.category_input.setText(self.employee_data["employee"]["category_name"])
         self.uniform_price_input.setText(
-            str(self.employee_data["occurrences"][row]["uniform_price"])
+            str(self.employee_data["occurrences"][0]["uniform_price"])
         )
 
         # Calculate and set Total Amount Deducted from the updated employee and occurrence data
@@ -451,9 +453,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.amount_deducted_input.setText(str(self.total_amount_deducted))
 
         # Calculate and set Deduction Status from the updated employee and occurrence data
-        self.final_uniform_price = self.employee_data["occurrences"][row][
-            "uniform_price"
-        ]
+        self.final_uniform_price = self.employee_data["occurrences"][0]["uniform_price"]
         self.deduction_status = final_occurrence_deduction_status(
             self.final_uniform_price, self.total_amount_deducted
         )
@@ -475,9 +475,10 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                 str(amount_deducted_after_occurrence_deletion)
             )
 
+            uniform_price = self.employee_data["occurrences"][0]["uniform_price"]
             final_occurrence_deduction_status_after_occurrence_deletion = (
                 final_occurrence_deduction_status(
-                    self.uniform_price, amount_deducted_after_occurrence_deletion
+                    uniform_price, amount_deducted_after_occurrence_deletion
                 )
             )
             self.deduction_status_input.setText(

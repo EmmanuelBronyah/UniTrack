@@ -488,9 +488,9 @@ def final_occurrence_deduction_status(uniform_price, amount_deducted):
         return ["Full Deduction", difference]
 
 
-def same_uniform_price(db):
-    employee = db.query(Employee).first()
-    employee_id = employee.id
+def same_uniform_price(db, employee_id):
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+
     occurrences = (
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
     )
@@ -499,7 +499,6 @@ def same_uniform_price(db):
 
     for occurrence in occurrences:
         same_price = first_uniform_price == occurrence.uniform_price
-
         if same_price:
             continue
         else:

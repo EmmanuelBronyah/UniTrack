@@ -182,11 +182,11 @@ def save_from_file(db: Session, file_path: str) -> dict:
 
                     number_of_records_saved += 1
 
-                response = same_uniform_price(db)
+                response = same_uniform_price(db, employee.id)
                 if response is not True:
                     db.rollback()
                     return {
-                        "error": f"Different uniform prices {str(response[0]),  str(response[1])} for employee with Service Number ({response[2]})."
+                        "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
                     }
 
                 db.commit()
@@ -388,3 +388,125 @@ def delete_record(db: Session, occurrence_id: int, employee_id: int) -> str | bo
             db.commit()
 
             return True
+
+
+def add_record(db: Session, record: dict) -> dict | bool:
+    employee_record_dict = {
+        "service_number": "",
+        "name": "",
+        "gender": "",
+        "unit": "",
+        "grade": "",
+        "rank": "",
+        "category": "",
+        "uniform_price": "",
+        "amount_deducted": "",
+        "outstanding_amount": "",
+        "deduction_status": "",
+    }
+    for key, value in record.items():
+        key = key.replace("_", " ")
+
+        match key:
+            case "service number" | "name":
+                is_empty = is_none(value)
+
+                if is_empty:
+                    db.rollback()
+                    return {"error": f"{key.capitalize()} must not be empty."}
+                else:
+                    result = validate_field(
+                        value,
+                        key,
+                        employee_record_dict,
+                    )
+                    if not result:
+                        db.rollback()
+                        return {
+                            "error": f"Invalid Service Number: {value} in Service Number column."
+                        }
+                    elif result == "EXCEEDED":
+                        return {
+                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits."
+                        }
+                    else:
+                        employee_record_dict = result
+
+            case "gender" | "unit" | "grade" | "rank" | "category":
+                is_empty = is_none(value)
+
+                if is_empty:
+                    db.rollback()
+                    return {"error": f"{key.capitalize()} must not be empty."}
+                else:
+                    result = select_value(value, key, employee_record_dict)
+                    if not result:
+                        db.rollback()
+                        return {
+                            "error": f"{key.capitalize()}: {value} does not exist in the database."
+                        }
+                    else:
+                        employee_record_dict = result
+
+            case "uniform price" | "amount deducted":
+
+                result = validate_amounts(value, key, employee_record_dict)
+
+                if not result:
+                    db.rollback()
+                    return {
+                        "error": f"Invalid digits: {value} in {key.capitalize()} column."
+                    }
+                else:
+                    employee_record_dict = result
+
+    employee_record_dict = assign_outstanding_amount(employee_record_dict, db)
+    result = assign_deduction_status(employee_record_dict)
+
+    if not result:
+        db.rollback()
+        return {
+            "error": "Uniform Price column must not be empty",
+        }
+
+    # Create a new employee if does not exist
+    employee = (
+        db.query(Employee)
+        .filter(Employee.service_number == result["service_number"])
+        .first()
+    )
+
+    if employee is None:
+        employee = Employee(
+            service_number=result["service_number"],
+            name=result["name"],
+            gender_id=result["gender"],
+            unit_id=result["unit"],
+            grade_id=result["grade"],
+            rank_id=result["rank"],
+            category_id=result["category"],
+        )
+        db.add(employee)
+        db.flush()  # writes to DB, assigns ID, but doesn’t commit yet
+
+    # Get created employee id and assign it to employee's occurrence record
+    occurrence = Occurrence(
+        employee_id=employee.id,
+        uniform_price=result["uniform_price"],
+        amount_deducted=result["amount_deducted"],
+        outstanding_amount=result["outstanding_amount"],
+        deduction_status_id=result["deduction_status"],
+    )
+    db.add(occurrence)
+    db.flush()
+
+    response = same_uniform_price(db, employee.id)
+    if response is not True:
+        db.rollback()
+        return {
+            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
+        }
+
+    db.commit()
+
+    return True
