@@ -6,6 +6,7 @@ from src.crud.crud_employee_record import (
     save_from_file,
     retrieve_random_records,
     retrieve_employee_record,
+    search_record,
 )
 from src.database.db import SessionLocal
 import os
@@ -52,13 +53,10 @@ class DashboardScreen(QtWidgets.QWidget):
             """
         )
 
-        self.search_layout = QtWidgets.QHBoxLayout()
-        self.search_layout.setSpacing(0)
-        self.search_layout.setContentsMargins(0, 0, 0, 0)
-
         self.search_bar = QtWidgets.QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
         self.search_bar.setFixedWidth(455)
+        self.search_bar.textChanged.connect(self.search_employee)
         self.search_bar.setStyleSheet(
             """
                 background-color: #ADADAD; 
@@ -68,14 +66,6 @@ class DashboardScreen(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
-        self.search_bar_button = QtWidgets.QPushButton()
-        self.search_bar_button.setFixedSize(QtCore.QSize(50, 40))
-        self.search_bar_button.setStyleSheet("background-color: #8B4513;")
-        self.search_icon = QtGui.QIcon(":/assets/icons/search")
-        self.search_bar_button.setIcon(self.search_icon)
-
-        self.search_layout.addWidget(self.search_bar)
-        self.search_layout.addWidget(self.search_bar_button)
 
         self.profile_container = CustomLabel()
         self.profile_container.setStyleSheet("margin-right: 10;")
@@ -84,7 +74,7 @@ class DashboardScreen(QtWidgets.QWidget):
 
         self.top_row_layout.addWidget(self.dashboard_text)
         self.top_row_layout.addSpacing(120)
-        self.top_row_layout.addLayout(self.search_layout)
+        self.top_row_layout.addWidget(self.search_bar)
         self.top_row_layout.addStretch()
         self.top_row_layout.addWidget(self.profile_container)
 
@@ -457,6 +447,68 @@ class DashboardScreen(QtWidgets.QWidget):
 
     def close_add_record_window(self):
         self.add_record_window.close()
+
+    def display_search_result(self, response):
+        if not response:
+            self.employee_data_info.setText("No record found")
+            employee_data_info_error(self.employee_data_info)
+            self.employee_data_info.setVisible(True)
+            return
+
+        self.employee_table.setRowCount(0)
+
+        number_of_rows = len(response)
+        number_of_columns = 5
+        self.employee_table.setRowCount(number_of_rows)
+
+        for row in range(number_of_rows):
+
+            for column in range(number_of_columns):
+                headers = [
+                    "service_number",
+                    "name",
+                    "unit",
+                    "grade",
+                    "total_amount_deducted",
+                ]
+                if headers[column] == "grade":
+                    cell_value = response[row].grade_name
+                elif headers[column] == "unit":
+                    cell_value = response[row].unit_name
+                else:
+                    cell_value = response[row].__dict__.get(headers[column])
+
+                self.employee_table.setItem(
+                    row,
+                    column,
+                    QtWidgets.QTableWidgetItem(str(cell_value)),
+                )
+
+    def find_record(self, service_number, name):
+        with SessionLocal() as db:
+            result = search_record(db, service_number, name)
+            return result
+
+    def search_employee(self):
+        self.employee_data_info.setVisible(False)
+
+        service_number = ""
+        name = ""
+
+        search_item = self.search_bar.text().strip()
+
+        if not search_item:
+            return
+
+        if search_item.isdigit():
+            service_number = search_item
+        else:
+            name = search_item
+
+        self.search_threadpool = QtCore.QThreadPool()
+        self.search_worker = Worker(self.find_record, service_number, name)
+        self.search_worker.signals.result.connect(self.display_search_result)
+        self.search_threadpool.start(self.search_worker)
 
     def setup_dashboard_screen(self):
         self.setup_container()

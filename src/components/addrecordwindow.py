@@ -269,6 +269,8 @@ class AddRecordWindow(QtWidgets.QWidget):
             employee_data_info_error(self.info_label)
             self.info_label.setVisible(True)
 
+            self.total_amount_deducted = Decimal("0.0000")
+
             self.name_textbox.setText("")
             self.name_textbox.setReadOnly(False)
 
@@ -361,10 +363,16 @@ class AddRecordWindow(QtWidgets.QWidget):
         uniform_price = self.uniform_price_textbox.text() or Decimal("0.0000")
         uniform_price = Decimal(str(uniform_price))
 
+        if uniform_price == Decimal("0.0000"):
+            return
+
         amount_deducted = self.amount_deducted_textbox.text() or Decimal("0.0000")
         amount_deducted = Decimal(str(amount_deducted))
 
-        difference = uniform_price - (amount_deducted + self.total_amount_deducted)
+        try:
+            difference = uniform_price - (amount_deducted + self.total_amount_deducted)
+        except AttributeError as e:
+            difference = uniform_price - amount_deducted
 
         self.outstanding_amount_textbox.setText(str(difference))
 

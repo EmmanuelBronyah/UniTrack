@@ -510,3 +510,46 @@ def add_record(db: Session, record: dict) -> dict | bool:
     db.commit()
 
     return True
+
+
+def search_record(db: Session, service_number=None, name=None):
+    search_by_service_number = (Employee.service_number).like(f"%{service_number}%")
+    search_by_name = func.lower(Employee.name).like(f"%{name.lower()}%")
+
+    if service_number:
+        results = db.query(Employee).filter(search_by_service_number).all()
+
+        if results:
+
+            for record in results:
+                unit = record.unit.name
+                setattr(record, "unit_name", unit)
+                rank = record.rank.name
+                setattr(record, "rank_name", rank)
+                gender = record.gender.name
+                setattr(record, "gender_name", gender)
+                grade = record.grade.name
+                setattr(record, "grade_name", grade)
+                category = record.category.name
+                setattr(record, "category_name", category)
+
+        return results
+
+    elif name:
+        results = db.query(Employee).filter(search_by_name).all()
+
+        if results:
+
+            for record in results:
+                unit = record.unit.name
+                setattr(record, "unit_name", unit)
+                rank = record.rank.name
+                setattr(record, "rank_name", rank)
+                gender = record.gender.name
+                setattr(record, "gender_name", gender)
+                grade = record.grade.name
+                setattr(record, "grade_name", grade)
+                category = record.category.name
+                setattr(record, "category_name", category)
+
+        return results
