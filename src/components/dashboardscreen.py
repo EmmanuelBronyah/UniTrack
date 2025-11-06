@@ -13,10 +13,10 @@ import os
 from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
-    employee_data_info_warning,
 )
 from src.components.workerclass import Worker
 from src.components.addrecordwindow import AddRecordWindow
+from src.components.threadpool_manager import global_threadpool
 
 
 class DashboardScreen(QtWidgets.QWidget):
@@ -239,10 +239,10 @@ class DashboardScreen(QtWidgets.QWidget):
         self.load_records_on_startup_worker = Worker(
             self.retrieve_records_from_database
         )
-        self.threadpool = QtCore.QThreadPool()
+
         self.load_records_on_startup_worker.signals.result.connect(self.display_records)
         self.load_records_on_startup_worker.signals.error.connect(self.handle_error)
-        self.threadpool.start(self.load_records_on_startup_worker)
+        global_threadpool.start(self.load_records_on_startup_worker)
 
     def show_employee_record_window(self, response):
         self.loading_indicator.stop()
@@ -259,9 +259,12 @@ class DashboardScreen(QtWidgets.QWidget):
             # show occurrence window
             self.occurrence_window = OccurrenceWindow(
                 employee_data=response,
+                employee_row_number=self.row_number_of_employee_clicked,
                 func=self.display_modified_employee_data,
                 func_2=self.remove_employee_from_table,
+                func_3=self.update_total_amount_on_dashboard,
             )
+            self.occurrence_window.setWindowModality(QtCore.Qt.ApplicationModal)
             self.occurrence_window.show()
 
     def get_employee_data(self, service_number):
@@ -282,13 +285,12 @@ class DashboardScreen(QtWidgets.QWidget):
 
         get_employee_data_worker = Worker(self.get_employee_data, service_number)
 
-        self.get_employee_data_threadpool = QtCore.QThreadPool()
         get_employee_data_worker.signals.result.connect(
             self.show_employee_record_window
         )
         get_employee_data_worker.signals.error.connect(self.handle_error)
 
-        self.get_employee_data_threadpool.start(get_employee_data_worker)
+        global_threadpool.start(get_employee_data_worker)
 
     def display_records(self, records):
         self.loading_indicator.stop()
@@ -355,11 +357,9 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator_box.setVisible(True)
 
         self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
-
-        self.retrieve_records_threadpool = QtCore.QThreadPool()
         self.retrieve_records_worker.signals.result.connect(self.display_records)
         self.retrieve_records_worker.signals.error.connect(self.handle_error)
-        self.retrieve_records_threadpool.start(self.retrieve_records_worker)
+        global_threadpool.start(self.retrieve_records_worker)
 
     def handle_error(self, error_tuple):
         exception_type, value, traceback_str = error_tuple
@@ -405,12 +405,9 @@ class DashboardScreen(QtWidgets.QWidget):
 
         with SessionLocal() as db:
             save_from_file_worker = Worker(save_from_file, db, file_path)
-
-            self.save_from_file_threadpool = QtCore.QThreadPool()
             save_from_file_worker.signals.result.connect(self.handle_records)
             save_from_file_worker.signals.error.connect(self.handle_error)
-
-            self.save_from_file_threadpool.start(save_from_file_worker)
+            global_threadpool.start(save_from_file_worker)
 
     def display_modified_employee_data(self, updated_data):
         number_of_columns = 5
@@ -442,7 +439,11 @@ class DashboardScreen(QtWidgets.QWidget):
         self.employee_table.removeRow(self.row_number_of_employee_clicked)
 
     def open_add_record_window(self):
-        self.add_record_window = AddRecordWindow(self.close_add_record_window)
+        self.add_record_window = AddRecordWindow(
+            self.close_add_record_window,
+            self.update_total_amount_on_dashboard_after_add_record,
+        )
+        self.add_record_window.setWindowModality(QtCore.Qt.ApplicationModal)
         self.add_record_window.show()
 
     def close_add_record_window(self):
@@ -505,10 +506,34 @@ class DashboardScreen(QtWidgets.QWidget):
         else:
             name = search_item
 
-        self.search_threadpool = QtCore.QThreadPool()
         self.search_worker = Worker(self.find_record, service_number, name)
         self.search_worker.signals.result.connect(self.display_search_result)
-        self.search_threadpool.start(self.search_worker)
+        global_threadpool.start(self.search_worker)
+
+    def update_total_amount_on_dashboard(self, employee_row_id, total_amount_deducted):
+        total_amount_deducted_column = 4
+
+        self.employee_table.setItem(
+            employee_row_id,
+            total_amount_deducted_column,
+            QtWidgets.QTableWidgetItem(str(total_amount_deducted)),
+        )
+
+    def update_total_amount_on_dashboard_after_add_record(
+        self, service_number, total_amount_deducted
+    ):
+        number_of_rows = self.employee_table.rowCount()
+        total_amount_deducted_column = 4
+
+        for row in range(number_of_rows):
+            current_service_number = self.employee_table.item(row, 0).text()
+
+            if current_service_number == service_number:
+                self.employee_table.setItem(
+                    row,
+                    total_amount_deducted_column,
+                    QtWidgets.QTableWidgetItem(str(total_amount_deducted)),
+                )
 
     def setup_dashboard_screen(self):
         self.setup_container()

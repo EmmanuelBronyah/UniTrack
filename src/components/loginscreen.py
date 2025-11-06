@@ -1,9 +1,9 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 from src.crud.crud_user import login_user
 from src.database.db import SessionLocal
-from src import utils
 import resources
 from src.components.workerclass import Worker
+from src.components.threadpool_manager import global_threadpool
 
 
 class LoginScreen(QtWidgets.QWidget):
@@ -189,9 +189,6 @@ class LoginScreen(QtWidgets.QWidget):
 
         with SessionLocal() as db:
             worker = Worker(login_user, db, username, password)
-
-            self.threadpool = QtCore.QThreadPool()
             worker.signals.result.connect(self.handle_login)
             worker.signals.error.connect(self.handle_error)
-
-            self.threadpool.start(worker)
+            global_threadpool.start(worker)

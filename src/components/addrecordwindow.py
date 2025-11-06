@@ -5,18 +5,21 @@ from src.utils import (
     employee_data_info_error,
     employee_data_info_success,
     calculate_total_amount_deducted,
+    get_total_amount_deducted_by_service_number,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
 from src.crud.crud_employee_record import retrieve_employee_record, add_record
 from decimal import Decimal
+from src.components.threadpool_manager import global_threadpool
 
 
 class AddRecordWindow(QtWidgets.QWidget):
-    def __init__(self, func):
+    def __init__(self, func, func_2):
         super().__init__()
 
         self.close_add_record_window = func
+        self.update_total_amount_on_dashboard_after_add_record = func_2
 
         self.setup_window()
         self.setup_container()
@@ -354,10 +357,9 @@ class AddRecordWindow(QtWidgets.QWidget):
 
         service_number = self.service_number_textbox.text()
 
-        self.threadpool = QtCore.QThreadPool()
         self.worker = Worker(self.get_employee, service_number)
         self.worker.signals.result.connect(self.display_employee_data)
-        self.threadpool.start(self.worker)
+        global_threadpool.start(self.worker)
 
     def calculate_outstanding_amount(self):
         uniform_price = self.uniform_price_textbox.text() or Decimal("0.0000")
@@ -395,6 +397,19 @@ class AddRecordWindow(QtWidgets.QWidget):
             )
             self.deduction_status_dropdown.setCurrentIndex(deduction_status_index)
 
+    def update_dashboard(self, total_amount_deducted):
+        # Update the Total Amount Deducted of an employee record if found on the dashboard when it's record is modified
+        service_number = self.service_number_textbox.text()
+
+        self.update_total_amount_on_dashboard_after_add_record(
+            service_number, total_amount_deducted
+        )
+
+    def run_total_amount_deducted_update(self, service_number):
+        with SessionLocal() as db:
+            result = get_total_amount_deducted_by_service_number(db, service_number)
+            return result
+
     def save_operation_result(self, response):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
@@ -409,6 +424,15 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
         self.info_label.setVisible(True)
+
+        # Update Total Amount Deducted
+        service_number = self.service_number_textbox.text()
+
+        self.update_total_amount_worker = Worker(
+            self.run_total_amount_deducted_update, service_number
+        )
+        self.update_total_amount_worker.signals.result.connect(self.update_dashboard)
+        global_threadpool.start(self.update_total_amount_worker)
 
     def add_record(self, record):
         with SessionLocal() as db:
@@ -433,10 +457,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         record["outstanding_amount"] = self.outstanding_amount_textbox.text()
         record["deduction_status"] = self.deduction_status_dropdown.currentText()
 
-        self.save_threadpool = QtCore.QThreadPool()
         self.save_worker = Worker(self.add_record, record)
         self.save_worker.signals.result.connect(self.save_operation_result)
-        self.save_threadpool.start(self.save_worker)
+        global_threadpool.start(self.save_worker)
 
     def close_window(self):
         self.close_add_record_window()

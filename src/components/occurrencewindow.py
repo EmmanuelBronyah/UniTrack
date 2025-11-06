@@ -1,10 +1,5 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-from src.utils import (
-    deduction_exceeded_warning,
-    employee_data_info_error,
-    employee_data_info_success,
-)
-from src.crud.crud_employee_record import save_record, retrieve_employee_record
+from src.crud.crud_employee_record import retrieve_employee_record
 from src.database.db import SessionLocal
 from src.components.workerclass import Worker
 from src.components.singleoccurrencewindow import SingleOccurrenceWindow
@@ -15,15 +10,18 @@ from src.utils import (
     recalculate_outstanding_amount_after_deletion,
     is_exceeded_deduction,
 )
+from src.components.threadpool_manager import global_threadpool
 
 
 class OccurrenceWindow(QtWidgets.QMainWindow):
-    def __init__(self, employee_data, func, func_2):
+    def __init__(self, employee_row_number, employee_data, func, func_2, func_3):
         super().__init__()
 
         self.employee_data = employee_data
+        self.employee_row_number_on_dashboard = employee_row_number
         self.update_employee_data_on_dashboard = func
         self.remove_employee_from_table = func_2
+        self.update_total_amount_on_dashboard = func_3
 
         self.setup_window()
         self.setup_container()
@@ -352,10 +350,13 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.single_occurrence_window = SingleOccurrenceWindow(
             occurrence=occurrence_clicked,
             employee=employee_clicked,
+            employee_row_number=self.employee_row_number_on_dashboard,
             occurrence_row_id=row,
             func=self.display_updated_data,
             func_2=self.remove_occurrence_record_update_occurrences,
+            func_3=self.update_total_amount_on_dashboard,
         )
+        self.single_occurrence_window.setWindowModality(QtCore.Qt.ApplicationModal)
         self.single_occurrence_window.show()
 
     def open_final_occurrence_window(self, employee_data):
@@ -388,6 +389,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.final_occurrence_window = FinalOccurrenceWindow(
             occurrence=final_occurrence_dict, employee=final_employee_dict
         )
+        self.final_occurrence_window.setWindowModality(QtCore.Qt.ApplicationModal)
         self.final_occurrence_window.show()
 
     def display_updated_data(self, updated_data):
@@ -511,14 +513,13 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
             if delete_employee:
                 self.remove_employee_from_table()
             else:
-                self.threadpool = QtCore.QThreadPool()
                 self.worker = Worker(
                     self.initiate_outstanding_amount_recalculation, employee_id
                 )
                 self.worker.signals.result.connect(
                     self.show_updated_occurrences_after_deletion
                 )
-                self.threadpool.start(self.worker)
+                global_threadpool.start(self.worker)
 
     def display_exceeded_deduction_label(self, response):
         if response:
@@ -534,11 +535,10 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
     def check_exceeded_deduction(self):
         employee_id = self.employee_data["employee"]["id"]
 
-        self.exceeded_deduction_threadpool = QtCore.QThreadPool()
         self.exceeded_deduction_worker = Worker(
             self.initiate_verify_exceeded_deduction, employee_id
         )
         self.exceeded_deduction_worker.signals.result.connect(
             self.display_exceeded_deduction_label
         )
-        self.exceeded_deduction_threadpool.start(self.exceeded_deduction_worker)
+        global_threadpool.start(self.exceeded_deduction_worker)

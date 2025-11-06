@@ -2,7 +2,6 @@ from PySide6 import QtWidgets, QtCore, QtGui
 from src.crud.crud_user import create_user
 from src.database.db import SessionLocal
 from src.database.models import User
-from src import utils
 import resources
 
 

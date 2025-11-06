@@ -13,6 +13,8 @@ from src.utils import (
     same_uniform_price,
     update_outstanding_amount,
     update_deduction_status,
+    get_total_amount_deducted,
+    get_updated_total_amount_deducted,
 )
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import func
@@ -44,8 +46,6 @@ def save_from_file(db: Session, file_path: str) -> dict:
         "deduction_status": "",
     }
     number_of_records_saved = 0
-    employee_records_to_save = []
-    occurrence_records_to_save = []
 
     df = pd.read_excel(file_path, dtype=str)
 
@@ -180,14 +180,18 @@ def save_from_file(db: Session, file_path: str) -> dict:
                     db.add(occurrence)
                     db.flush()
 
-                    number_of_records_saved += 1
+                    response = same_uniform_price(db, employee.id)
+                    if response is not True:
+                        db.rollback()
+                        return {
+                            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
+                        }
 
-                response = same_uniform_price(db, employee.id)
-                if response is not True:
-                    db.rollback()
-                    return {
-                        "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
-                    }
+                    # Assign Total Amount Deducted
+                    total_amount_deducted = get_total_amount_deducted(db, employee.id)
+                    employee.total_amount_deducted = total_amount_deducted
+
+                    number_of_records_saved += 1
 
                 db.commit()
 
@@ -353,6 +357,13 @@ def save_record(db: Session, employee_record: dict) -> dict:
     record.category_id = result["category"]
     record.rank_id = result["rank"]
 
+    current_amount_deducted = employee_record_dict.get("amount_deducted")
+    total_amount_deducted = get_updated_total_amount_deducted(
+        db, employee_id, occurrence_id, current_amount_deducted
+    )
+
+    record.total_amount_deducted = total_amount_deducted
+
     db.commit()
     db.refresh(record)
 
@@ -506,6 +517,10 @@ def add_record(db: Session, record: dict) -> dict | bool:
         return {
             "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
         }
+
+    # Assign Total Amount Deducted
+    total_amount_deducted = get_total_amount_deducted(db, employee.id)
+    employee.total_amount_deducted = total_amount_deducted
 
     db.commit()
 

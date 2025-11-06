@@ -4,21 +4,37 @@ from src.utils import (
     setup_combobox,
     employee_data_info_error,
     employee_data_info_success,
+    get_total_amount_deducted,
+    set_total_amount_deducted_on_employee,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
 from src.crud.crud_employee_record import save_record, delete_record
+from src.components.threadpool_manager import global_threadpool
+
+# TODO: Add a confirmation window; eg. Are you sure you want to delete/cancel?
 
 
 class SingleOccurrenceWindow(QtWidgets.QWidget):
-    def __init__(self, occurrence, employee, occurrence_row_id, func, func_2):
+    def __init__(
+        self,
+        occurrence,
+        employee,
+        employee_row_number,
+        occurrence_row_id,
+        func,
+        func_2,
+        func_3,
+    ):
         super().__init__()
 
         self.occurrence = occurrence
         self.employee = employee
+        self.employee_row_number_on_dashboard = employee_row_number
         self.occurrence_row_id = occurrence_row_id
         self.update_occurrence_window = func
         self.update_occurrences_and_remove_occurrence = func_2
+        self.update_total_amount_on_dashboard = func_3
 
         self.setup_window()
         self.setup_container()
@@ -338,6 +354,12 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         # Update the occurrences in the Occurrence window since one of the occurrences has been modified
         self.update_occurrence_window(response)
 
+        # Update Total Amount Figure on the dashboard since one of the occurrences has been modified
+        row_number = self.employee_row_number_on_dashboard
+        total_amount_deducted = employee.get("total_amount_deducted")
+
+        self.update_total_amount_on_dashboard(row_number, total_amount_deducted)
+
     def update_data(self, updated_employee_data):
         with SessionLocal() as db:
             result = save_record(db, updated_employee_data)
@@ -362,14 +384,30 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             "deduction_status": self.deduction_status_dropdown.currentText(),
         }
 
-        self.save_record_threadpool = QtCore.QThreadPool()
         self.save_record_worker = Worker(
             self.update_data,
             self.updated_employee_record,
         )
         self.save_record_worker.signals.result.connect(self.display_updated_values)
         self.save_record_worker.signals.error.connect(self.handle_error)
-        self.save_record_threadpool.start(self.save_record_worker)
+        global_threadpool.start(self.save_record_worker)
+
+    def change_total_amount_deducted_on_dashboard(self, total_amount_deducted):
+        # Update Total Amount Figure on the dashboard since one of the occurrences has been deleted
+        row_number = self.employee_row_number_on_dashboard
+        self.update_total_amount_on_dashboard(row_number, total_amount_deducted)
+
+    def start_total_amount_deducted_calculation(self, employee_id):
+        with SessionLocal() as db:
+            total_amount_deducted = get_total_amount_deducted(db, employee_id)
+            result = set_total_amount_deducted_on_employee(
+                db, employee_id, total_amount_deducted
+            )
+
+            if result:
+                db.commit()
+
+            return total_amount_deducted
 
     def initiate_occurrence_record_removal(self, response):
         if response == "DELETED LAST OCCURRENCE AND ASSOCIATED EMPLOYEE":
@@ -387,6 +425,15 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 False,
             )
 
+        # Calculate Total Amount Deducted after occurrence deletion
+        self.worker = Worker(
+            self.start_total_amount_deducted_calculation, self.employee.get("id")
+        )
+        self.worker.signals.result.connect(
+            self.change_total_amount_deducted_on_dashboard
+        )
+        global_threadpool.start(self.worker)
+
     def delete_occurrence(self):
         with SessionLocal() as db:
             result = delete_record(
@@ -395,9 +442,8 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             return result
 
     def delete_record(self):
-        self.delete_record_threadpool = QtCore.QThreadPool()
         self.delete_record_worker = Worker(self.delete_occurrence)
         self.delete_record_worker.signals.result.connect(
             self.initiate_occurrence_record_removal
         )
-        self.delete_record_threadpool.start(self.delete_record_worker)
+        global_threadpool.start(self.delete_record_worker)

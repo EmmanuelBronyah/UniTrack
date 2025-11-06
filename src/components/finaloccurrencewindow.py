@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import resources
-from src.utils import setup_combobox
 
 
 class FinalOccurrenceWindow(QtWidgets.QWidget):

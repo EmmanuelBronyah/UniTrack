@@ -579,3 +579,64 @@ def is_exceeded_deduction(db, employee_id):
         return True
 
     return False
+
+
+def get_total_amount_deducted(db, employee_id):
+    total_amount_deducted = Decimal("0.0000")
+
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    for occurrence in occurrences:
+        amount_deducted = occurrence.amount_deducted
+        total_amount_deducted += amount_deducted
+
+    return total_amount_deducted
+
+
+def get_updated_total_amount_deducted(
+    db, employee_id, occurrence_id, current_amount_deducted
+):
+    total_amount_deducted = Decimal("0.0000")
+
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    for occurrence in occurrences:
+
+        if occurrence.id == occurrence_id:
+            continue
+
+        amount_deducted = occurrence.amount_deducted
+        total_amount_deducted += amount_deducted
+
+    updated_total_amount_deducted = total_amount_deducted + current_amount_deducted
+
+    return updated_total_amount_deducted
+
+
+def get_total_amount_deducted_by_service_number(db, service_number):
+    employee = (
+        db.query(Employee).filter(Employee.service_number == service_number).first()
+    )
+    employee_id = employee.id
+
+    occurrences = (
+        db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
+    )
+
+    total_amount_deducted = Decimal("0.0000")
+
+    for occurrence in occurrences:
+        amount_deducted = occurrence.amount_deducted
+        total_amount_deducted += amount_deducted
+
+    return total_amount_deducted
+
+
+def set_total_amount_deducted_on_employee(db, employee_id, total_amount_deducted):
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    employee.total_amount_deducted = total_amount_deducted
+    return True
