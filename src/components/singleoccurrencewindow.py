@@ -11,6 +11,7 @@ from src.components.workerclass import Worker
 from src.database.db import SessionLocal
 from src.crud.crud_employee_record import save_record, delete_record
 from src.components.threadpool_manager import global_threadpool
+from src.components.deletedialog import DeleteDialog
 
 # TODO: Add a confirmation window; eg. Are you sure you want to delete/cancel?
 
@@ -253,7 +254,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 border-radius: 5;
             """
         )
-        self.delete_button.clicked.connect(self.delete_record)
+        self.delete_button.clicked.connect(self.open_delete_dialog)
         self.grid_layout.addWidget(
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
@@ -417,6 +418,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 self.employee.get("id"),
                 True,
             )
+            return
         else:
             self.update_occurrences_and_remove_occurrence(
                 response,
@@ -441,9 +443,22 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             )
             return result
 
-    def delete_record(self):
+    def open_delete_dialog(self):
+        self.delete_dialog = DeleteDialog(
+            self.start_deletion, self.exit_dialog, parent=self
+        )
+        self.delete_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.delete_dialog.show()
+
+    def start_deletion(self):
+        # Close the Delete Dialog before deletion starts
+        self.exit_dialog()
+
         self.delete_record_worker = Worker(self.delete_occurrence)
         self.delete_record_worker.signals.result.connect(
             self.initiate_occurrence_record_removal
         )
         global_threadpool.start(self.delete_record_worker)
+
+    def exit_dialog(self):
+        self.delete_dialog.close()
