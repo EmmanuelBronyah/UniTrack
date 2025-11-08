@@ -223,11 +223,12 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.form_layout.addWidget(self.category_widget, 0, 2)
 
         self.uniform_price = self.employee_data["occurrences"][0]["uniform_price"]
+        display_uniform_price = f"{self.uniform_price:,.2f}"
         self.uniform_price_widget = QtWidgets.QWidget()
         self.uniform_price_layout = QtWidgets.QHBoxLayout(self.uniform_price_widget)
         self.uniform_price_label = QtWidgets.QLabel("Uniform Price:")
         self.uniform_price_input = QtWidgets.QLineEdit(
-            readOnly=True, text=str(self.uniform_price)
+            readOnly=True, text=display_uniform_price
         )
         self.uniform_price_input.setFixedHeight(35)
         self.uniform_price_input.setStyleSheet(
@@ -240,11 +241,12 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.amount_deducted = calculate_total_amount_deducted(
             self.employee_data["occurrences"]
         )
+        display_amount_deducted = f"{self.amount_deducted:,.2f}"
         self.amount_deducted_widget = QtWidgets.QWidget()
         self.amount_deducted_layout = QtWidgets.QHBoxLayout(self.amount_deducted_widget)
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted:")
         self.amount_deducted_input = QtWidgets.QLineEdit(
-            readOnly=True, text=str(self.amount_deducted)
+            readOnly=True, text=display_amount_deducted
         )
         self.amount_deducted_input.setFixedHeight(35)
         self.amount_deducted_input.setStyleSheet(
@@ -323,12 +325,18 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                     cell_value = self.employee_data["employee"]["category_name"]
 
                 elif employee_data_keys[column] == "uniform_price":
-                    cell_value = self.employee_data["occurrences"][row]["uniform_price"]
+                    uniform_price = self.employee_data["occurrences"][row][
+                        "uniform_price"
+                    ]
+                    display_uniform_price = f"{uniform_price:,.2f}"
+                    cell_value = display_uniform_price
 
                 elif employee_data_keys[column] == "amount_deducted":
-                    cell_value = self.employee_data["occurrences"][row][
+                    amount_deducted = self.employee_data["occurrences"][row][
                         "amount_deducted"
                     ]
+                    display_amount_deducted = f"{amount_deducted:,.2f}"
+                    cell_value = display_amount_deducted
 
                 elif employee_data_keys[column] == "deduction_status":
                     cell_value = self.employee_data["occurrences"][row][
@@ -423,9 +431,11 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                     cell_value = self.employee_data["occurrences"][row]["uniform_price"]
 
                 elif employee_data_keys[column] == "amount_deducted":
-                    cell_value = self.employee_data["occurrences"][row][
+                    amount_deducted = self.employee_data["occurrences"][row][
                         "amount_deducted"
                     ]
+                    display_amount_deducted = f"{amount_deducted:,.2f}"
+                    cell_value = display_amount_deducted
 
                 elif employee_data_keys[column] == "deduction_status":
                     cell_value = self.employee_data["occurrences"][row][
@@ -444,15 +454,17 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.name_input.setText(self.employee_data["employee"]["name"])
         self.category_input.setText(self.employee_data["employee"]["category_name"])
-        self.uniform_price_input.setText(
-            str(self.employee_data["occurrences"][0]["uniform_price"])
-        )
+
+        uniform_price = self.employee_data["occurrences"][0]["uniform_price"]
+        display_uniform_price = f"{uniform_price:,.2f}"
+        self.uniform_price_input.setText(display_uniform_price)
 
         # Calculate and set Total Amount Deducted from the updated employee and occurrence data
         self.total_amount_deducted = calculate_total_amount_deducted(
             self.employee_data["occurrences"]
         )
-        self.amount_deducted_input.setText(str(self.total_amount_deducted))
+        display_total_amount_deducted = f"{self.total_amount_deducted:,.2f}"
+        self.amount_deducted_input.setText(display_total_amount_deducted)
 
         # Calculate and set Deduction Status from the updated employee and occurrence data
         self.final_uniform_price = self.employee_data["occurrences"][0]["uniform_price"]
@@ -473,8 +485,11 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
             amount_deducted_after_occurrence_deletion = calculate_total_amount_deducted(
                 self.employee_data["occurrences"]
             )
+            display_amount_deducted_after_occurrence_deletion = (
+                f"{amount_deducted_after_occurrence_deletion:,.2f}"
+            )
             self.amount_deducted_input.setText(
-                str(amount_deducted_after_occurrence_deletion)
+                display_amount_deducted_after_occurrence_deletion
             )
 
             uniform_price = self.employee_data["occurrences"][0]["uniform_price"]

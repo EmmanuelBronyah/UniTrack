@@ -19,8 +19,10 @@ for _ in range(n):
     if service_number in existing_records:
         record = existing_records[service_number].copy()
         # Update only the changing fields
-        record["uniform price"] = 2000
-        record["amount deducted"] = random.choice([1000, 2000, 500, 1000, 2000])
+        record["uniform price"] = 2000.00
+        record["amount deducted"] = random.choice(
+            [1078.86, 876.34, 981.58, 1539.97, 996.96]
+        )
     else:
         # Generate a new employee record
         record = {
@@ -49,13 +51,15 @@ for _ in range(n):
                     "General",
                     "Labourer",
                     "Medical",
-                    "Stores",
+                    "Supply",
                     "Technician",
                     "Warden",
                 ]
             ),
-            "uniform price": 2000,
-            "amount deducted": random.choice([1000, 2000, 500, 1000, 2000]),
+            "uniform price": 2000.00,
+            "amount deducted": random.choice(
+                [1078.86, 876.34, 981.58, 1539.97, 996.96]
+            ),
         }
         # Save this record for possible reuse later
         existing_records[service_number] = record.copy()

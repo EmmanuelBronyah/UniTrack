@@ -1,9 +1,8 @@
 import pandas as pd
 from sqlalchemy.orm import Session
-from src.database.models import EmployeeRecord, Employee, Occurrence, Grade, Unit
+from src.database.models import Employee, Occurrence
 from src.utils import (
     missing_headers,
-    get_date,
     assign_outstanding_amount,
     is_none,
     validate_field,
@@ -20,7 +19,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import func
 
 
-def save_from_file(db: Session, file_path: str) -> dict:
+def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
     valid_headers = [
         "service number",
         "name",
@@ -190,6 +189,9 @@ def save_from_file(db: Session, file_path: str) -> dict:
                     # Assign Total Amount Deducted
                     total_amount_deducted = get_total_amount_deducted(db, employee.id)
                     employee.total_amount_deducted = total_amount_deducted
+
+                    percent = (row_index + 1) / len(df) * 100
+                    progress_callback.emit(percent)
 
                     number_of_records_saved += 1
 

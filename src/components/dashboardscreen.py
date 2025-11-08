@@ -13,6 +13,7 @@ import os
 from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
+    perform_export,
 )
 from src.components.workerclass import Worker
 from src.components.addrecordwindow import AddRecordWindow
@@ -122,6 +123,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.export_button = QtWidgets.QPushButton("Export data")
         self.export_button.setFixedHeight(40)
         self.export_button.setFixedWidth(120)
+        self.export_button.clicked.connect(self.open_export_dialog)
         self.export_button.setStyleSheet(
             """
                 background-color: #8B4513;
@@ -191,9 +193,36 @@ class DashboardScreen(QtWidgets.QWidget):
         self.footer_layout = QtWidgets.QHBoxLayout(self.footer_widget)
         self.footer_layout.setContentsMargins(0, 0, 0, 0)
 
+        self.stack_widget = QtWidgets.QWidget()
+        self.progress_employee_data_stack = QtWidgets.QStackedLayout(self.stack_widget)
+        self.progress_employee_data_stack.setContentsMargins(0, 0, 0, 0)
+
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFixedHeight(15)
+        self.progress_bar.setTextVisible(True)
+
+        self.progress_bar.setStyleSheet(
+            """
+            QProgressBar {
+                border: 3px solid white;
+                border-radius: 5px;
+                text-align: center;
+                color: #3B3B3B;
+                font-size: 10pt;
+                background-color: white;
+            }
+            
+            QProgressBar::chunk {
+                background-color: #ADADAD;
+                border-radius: 5px;
+            }
+            """
+        )
+
         self.employee_data_info = QtWidgets.QLabel()
         self.employee_data_info.setWordWrap(True)
-        self.employee_data_info.setVisible(False)
         self.employee_data_info.setStyleSheet(
             """
             background-color: #DBDBDB;
@@ -203,6 +232,10 @@ class DashboardScreen(QtWidgets.QWidget):
             padding: 3;
             """
         )
+
+        self.progress_employee_data_stack.addWidget(self.progress_bar)
+        self.progress_employee_data_stack.addWidget(self.employee_data_info)
+        self.progress_employee_data_stack.setCurrentIndex(1)
 
         self.loading_indicator_box = QtWidgets.QLabel()
         self.loading_indicator_box.setFixedSize(45, 45)
@@ -215,10 +248,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.product_version_info = QtWidgets.QLabel("UniTrack v1.0.0")
         self.product_version_info.setStyleSheet("color: #8c8c8c; font-weight: bold;")
 
-        self.footer_layout.addWidget(
-            self.employee_data_info,
-            stretch=1,
-        )
+        self.footer_layout.addWidget(self.stack_widget, stretch=1)
         self.footer_layout.addWidget(
             self.loading_indicator_box,
             alignment=QtCore.Qt.AlignmentFlag.AlignVCenter,
@@ -241,7 +271,6 @@ class DashboardScreen(QtWidgets.QWidget):
         )
 
         self.load_records_on_startup_worker.signals.result.connect(self.display_records)
-        self.load_records_on_startup_worker.signals.error.connect(self.handle_error)
         global_threadpool.start(self.load_records_on_startup_worker)
 
     def show_employee_record_window(self, response):
@@ -288,7 +317,6 @@ class DashboardScreen(QtWidgets.QWidget):
         get_employee_data_worker.signals.result.connect(
             self.show_employee_record_window
         )
-        get_employee_data_worker.signals.error.connect(self.handle_error)
 
         global_threadpool.start(get_employee_data_worker)
 
@@ -315,8 +343,16 @@ class DashboardScreen(QtWidgets.QWidget):
                 ]
                 if headers[column] == "grade":
                     cell_value = records[row].grade_name
+
                 elif headers[column] == "unit":
                     cell_value = records[row].unit_name
+
+                elif headers[column] == "total_amount_deducted":
+                    total_amount_deducted = records[row].__dict__.get(
+                        "total_amount_deducted"
+                    )
+                    cell_value = f"{total_amount_deducted:,.2f}"
+
                 else:
                     cell_value = records[row].__dict__.get(headers[column])
 
@@ -326,18 +362,14 @@ class DashboardScreen(QtWidgets.QWidget):
                     QtWidgets.QTableWidgetItem(str(cell_value)),
                 )
 
-        self.employee_data_info.setVisible(True)
-        self.employee_data_info.setText(f"Retrieved {number_of_rows} employee records.")
-        employee_data_info_success(self.employee_data_info)
-
     def retrieve_records_from_database(self):
         with SessionLocal() as db:
             response = retrieve_random_records(db)
             return response
 
     def handle_records(self, response):
-        self.loading_indicator.stop()
-        self.loading_indicator_box.setVisible(False)
+        # Show employee data info label
+        self.progress_employee_data_stack.setCurrentIndex(1)
 
         error = response.get("error", None)
         records_saved = response.get("records saved", None)
@@ -345,10 +377,9 @@ class DashboardScreen(QtWidgets.QWidget):
         if error:
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
-            self.employee_data_info.setVisible(True)
         else:
             self.employee_data_info.setText(
-                f"Processed {records_saved if records_saved else '0'} records"
+                f"{records_saved if records_saved else '0'} records recorded"
             )
             employee_data_info_success(self.employee_data_info)
 
@@ -358,32 +389,7 @@ class DashboardScreen(QtWidgets.QWidget):
 
         self.retrieve_records_worker = Worker(self.retrieve_records_from_database)
         self.retrieve_records_worker.signals.result.connect(self.display_records)
-        self.retrieve_records_worker.signals.error.connect(self.handle_error)
         global_threadpool.start(self.retrieve_records_worker)
-
-    def handle_error(self, error_tuple):
-        exception_type, value, traceback_str = error_tuple
-
-        # exception_message = str(value.orig)
-        # service_number = value.params[0]
-
-        # error_message = integrity_error_message(exception_message, service_number)
-        error_message = str(value)
-
-        self.loading_indicator.stop()
-        self.loading_indicator_box.setVisible(False)
-
-        self.employee_data_info.setText(error_message)
-        self.employee_data_info.setStyleSheet(
-            """
-            background-color: #dc3545;
-            color: white;
-            font-weight: bold; 
-            border-radius: 5; 
-            padding: 3;
-            """
-        )
-        self.employee_data_info.setVisible(True)
 
     def import_data(self):
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
@@ -394,19 +400,18 @@ class DashboardScreen(QtWidgets.QWidget):
             "Excel Files (*.xlsx *.xls)",
         )
         if not file_path:
-            self.employee_data_info.setText("No file selected")
-            employee_data_info_error(self.employee_data_info)
-            self.employee_data_info.setVisible(True)
             return
 
-        self.loading_indicator.start()
-        self.loading_indicator_box.setVisible(True)
-        self.employee_data_info.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.progress_employee_data_stack.setCurrentIndex(0)
 
         with SessionLocal() as db:
             save_from_file_worker = Worker(save_from_file, db, file_path)
+            save_from_file_worker.kwargs["progress_callback"] = (
+                save_from_file_worker.signals.progress
+            )
             save_from_file_worker.signals.result.connect(self.handle_records)
-            save_from_file_worker.signals.error.connect(self.handle_error)
+            save_from_file_worker.signals.progress.connect(self.progress_bar.setValue)
             global_threadpool.start(save_from_file_worker)
 
     def display_modified_employee_data(self, updated_data):
@@ -423,8 +428,14 @@ class DashboardScreen(QtWidgets.QWidget):
             ]
             if headers[column] == "grade":
                 cell_value = updated_data["grade_name"]
+
             elif headers[column] == "unit":
                 cell_value = updated_data["unit_name"]
+
+            elif headers[column] == "total_amount_deducted":
+                total_amount_deducted = updated_data["total_amount_deducted"]
+                cell_value = f"{total_amount_deducted:,.2f}"
+
             else:
                 cell_value = updated_data[headers[column]]
 
@@ -474,8 +485,16 @@ class DashboardScreen(QtWidgets.QWidget):
                 ]
                 if headers[column] == "grade":
                     cell_value = response[row].grade_name
+
                 elif headers[column] == "unit":
                     cell_value = response[row].unit_name
+
+                elif headers[column] == "total_amount_deducted":
+                    total_amount_deducted = response[row].__dict__.get(
+                        "total_amount_deducted"
+                    )
+                    cell_value = f"{total_amount_deducted:,.2f}"
+
                 else:
                     cell_value = response[row].__dict__.get(headers[column])
 
@@ -516,7 +535,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.employee_table.setItem(
             employee_row_id,
             total_amount_deducted_column,
-            QtWidgets.QTableWidgetItem(str(total_amount_deducted)),
+            QtWidgets.QTableWidgetItem(f"{total_amount_deducted:,.2f}"),
         )
 
     def update_total_amount_on_dashboard_after_add_record(
@@ -532,8 +551,46 @@ class DashboardScreen(QtWidgets.QWidget):
                 self.employee_table.setItem(
                     row,
                     total_amount_deducted_column,
-                    QtWidgets.QTableWidgetItem(str(total_amount_deducted)),
+                    QtWidgets.QTableWidgetItem(f"{total_amount_deducted:,.2f}"),
                 )
+
+    def export_data_result(self, response):
+        self.progress_employee_data_stack.setCurrentIndex(1)
+
+        if not response:
+            self.employee_data_info.setText("An error occurred - Retry export")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        self.employee_data_info.setText("Data generated")
+        employee_data_info_success(self.employee_data_info)
+
+    def export_data(self, file_name, progress_callback=None):
+        progress_callback = progress_callback
+        with SessionLocal() as db:
+            result = perform_export(db, file_name, progress_callback)
+            return result
+
+    def start_export(self, file_name):
+        self.progress_bar.setValue(0)
+        self.progress_employee_data_stack.setCurrentIndex(0)
+
+        self.export_worker = Worker(self.export_data, file_name)
+        self.export_worker.kwargs["progress_callback"] = (
+            self.export_worker.signals.progress
+        )
+        self.export_worker.signals.result.connect(self.export_data_result)
+        self.export_worker.signals.progress.connect(self.progress_bar.setValue)
+        global_threadpool.start(self.export_worker)
+
+    def open_export_dialog(self):
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export Data", "", "Excel Files (*.xlsx *.xls)"
+        )
+        if not file_name:
+            return
+
+        self.start_export(file_name)
 
     def setup_dashboard_screen(self):
         self.setup_container()

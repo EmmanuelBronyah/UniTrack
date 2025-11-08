@@ -1,5 +1,6 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import resources
+from decimal import Decimal
 
 
 class FinalOccurrenceWindow(QtWidgets.QWidget):
@@ -68,11 +69,12 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.name_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
-        uniform_price = self.occurrence["uniform_price"]
+        uniform_price = Decimal(self.occurrence["uniform_price"])
+        display_uniform_price = f"{uniform_price:,.2f}"
         self.uniform_price_label = QtWidgets.QLabel("Uniform Price")
         self.grid_layout.addWidget(self.uniform_price_label, 1, 2)
         self.uniform_price_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(uniform_price)
+            readOnly=True, text=display_uniform_price
         )
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
@@ -88,11 +90,12 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.gender_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.gender_textbox, 2, 1)
 
-        amount_deducted = self.occurrence["amount_deducted"]
+        amount_deducted = Decimal(self.occurrence["amount_deducted"])
+        display_amount_deducted = f"{amount_deducted:,.2f}"
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted")
         self.grid_layout.addWidget(self.amount_deducted_label, 2, 2)
         self.amount_deducted_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(amount_deducted)
+            readOnly=True, text=display_amount_deducted
         )
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
@@ -108,11 +111,12 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.unit_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
         self.grid_layout.addWidget(self.unit_textbox, 3, 1)
 
-        self.outstanding_amount = self.occurrence["outstanding_amount"]
+        self.outstanding_amount = Decimal(self.occurrence["outstanding_amount"])
+        display_outstanding_amount = f"{self.outstanding_amount:,.2f}"
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
         self.grid_layout.addWidget(self.outstanding_amount_label, 3, 2)
         self.outstanding_amount_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(self.outstanding_amount)
+            readOnly=True, text=display_outstanding_amount
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(

@@ -6,6 +6,7 @@ from src.utils import (
     employee_data_info_success,
     calculate_total_amount_deducted,
     get_total_amount_deducted_by_service_number,
+    two_dp_decimal,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -176,7 +177,6 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.deduction_status_dropdown = setup_combobox(
             self.deduction_status_dropdown, "deduction_status"
         )
-        self.deduction_status_dropdown.setEnabled(False)
 
         # Setting retrieved value
         index = self.deduction_status_dropdown.findText("")
@@ -272,7 +272,7 @@ class AddRecordWindow(QtWidgets.QWidget):
             employee_data_info_error(self.info_label)
             self.info_label.setVisible(True)
 
-            self.total_amount_deducted = Decimal("0.0000")
+            self.total_amount_deducted = Decimal("0.00")
 
             self.name_textbox.setText("")
             self.name_textbox.setReadOnly(False)
@@ -343,7 +343,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.category_dropdown.setCurrentIndex(category_index)
         self.category_dropdown.setEnabled(False)
 
-        self.uniform_price_textbox.setText(str(occurrences[0].get("uniform_price")))
+        uniform_price = occurrences[0].get("uniform_price")
+        display_uniform_price = f"{uniform_price:,.2f}"
+        self.uniform_price_textbox.setText(display_uniform_price)
         self.uniform_price_textbox.setReadOnly(True)
 
     def get_employee(self, service_number):
@@ -362,21 +364,27 @@ class AddRecordWindow(QtWidgets.QWidget):
         global_threadpool.start(self.worker)
 
     def calculate_outstanding_amount(self):
-        uniform_price = self.uniform_price_textbox.text() or Decimal("0.0000")
-        uniform_price = Decimal(str(uniform_price))
+        uniform_price = self.uniform_price_textbox.text().replace(",", "") or Decimal(
+            "0.00"
+        )
+        uniform_price = two_dp_decimal(uniform_price)
 
-        if uniform_price == Decimal("0.0000"):
+        if uniform_price == Decimal("0.00"):
             return
 
-        amount_deducted = self.amount_deducted_textbox.text() or Decimal("0.0000")
-        amount_deducted = Decimal(str(amount_deducted))
+        amount_deducted = self.amount_deducted_textbox.text().replace(
+            ",", ""
+        ) or Decimal("0.00")
+        amount_deducted = two_dp_decimal(amount_deducted)
 
         try:
             difference = uniform_price - (amount_deducted + self.total_amount_deducted)
-        except AttributeError as e:
+        except AttributeError:
             difference = uniform_price - amount_deducted
 
-        self.outstanding_amount_textbox.setText(str(difference))
+        difference = two_dp_decimal(difference)
+        display_difference = f"{difference:,.2f}"
+        self.outstanding_amount_textbox.setText(display_difference)
 
         # Setting the deduction status
         if uniform_price == difference:
@@ -452,9 +460,11 @@ class AddRecordWindow(QtWidgets.QWidget):
         record["gender"] = self.gender_dropdown.currentText()
         record["rank"] = self.rank_dropdown.currentText()
         record["category"] = self.category_dropdown.currentText()
-        record["uniform_price"] = self.uniform_price_textbox.text()
-        record["amount_deducted"] = self.amount_deducted_textbox.text()
-        record["outstanding_amount"] = self.outstanding_amount_textbox.text()
+        record["uniform_price"] = self.uniform_price_textbox.text().replace(",", "")
+        record["amount_deducted"] = self.amount_deducted_textbox.text().replace(",", "")
+        record["outstanding_amount"] = self.outstanding_amount_textbox.text().replace(
+            ",", ""
+        )
         record["deduction_status"] = self.deduction_status_dropdown.currentText()
 
         self.save_worker = Worker(self.add_record, record)

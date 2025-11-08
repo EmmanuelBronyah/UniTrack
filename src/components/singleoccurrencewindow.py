@@ -13,8 +13,6 @@ from src.crud.crud_employee_record import save_record, delete_record
 from src.components.threadpool_manager import global_threadpool
 from src.components.deletedialog import DeleteDialog
 
-# TODO: Add a confirmation window; eg. Are you sure you want to delete/cancel?
-
 
 class SingleOccurrenceWindow(QtWidgets.QWidget):
     def __init__(
@@ -101,9 +99,10 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
         uniform_price = self.occurrence["uniform_price"]
+        display_uniform_price = f"{uniform_price:,.2f}"
         self.uniform_price_label = QtWidgets.QLabel("Uniform Price")
         self.grid_layout.addWidget(self.uniform_price_label, 1, 2)
-        self.uniform_price_textbox = QtWidgets.QLineEdit(text=str(uniform_price))
+        self.uniform_price_textbox = QtWidgets.QLineEdit(text=display_uniform_price)
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
@@ -125,9 +124,10 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.gender_dropdown, 2, 1)
 
         amount_deducted = self.occurrence["amount_deducted"]
+        display_amount_deducted = f"{amount_deducted:,.2f}"
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted")
         self.grid_layout.addWidget(self.amount_deducted_label, 2, 2)
-        self.amount_deducted_textbox = QtWidgets.QLineEdit(text=str(amount_deducted))
+        self.amount_deducted_textbox = QtWidgets.QLineEdit(text=display_amount_deducted)
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
             "background-color: #ADADAD; color: #3B3B3B;"
@@ -149,10 +149,11 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.unit_dropdown, 3, 1)
 
         outstanding_amount = self.occurrence["outstanding_amount"]
+        display_outstanding_amount = f"{outstanding_amount:,.2f}"
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
         self.grid_layout.addWidget(self.outstanding_amount_label, 3, 2)
         self.outstanding_amount_textbox = QtWidgets.QLineEdit(
-            readOnly=True, text=str(outstanding_amount)
+            readOnly=True, text=display_outstanding_amount
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
@@ -331,17 +332,17 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         category_index = self.category_dropdown.findText(employee.get("category_name"))
         self.category_dropdown.setCurrentIndex(category_index)
 
-        self.uniform_price_textbox.setText(
-            str(occurrence_to_display.get("uniform_price"))
-        )
+        uniform_price = occurrence_to_display.get("uniform_price")
+        display_uniform_price = f"{uniform_price:,.2f}"
+        self.uniform_price_textbox.setText(display_uniform_price)
 
-        self.amount_deducted_textbox.setText(
-            str(occurrence_to_display.get("amount_deducted"))
-        )
+        amount_deducted = occurrence_to_display.get("amount_deducted")
+        display_amount_deducted = f"{amount_deducted:,.2f}"
+        self.amount_deducted_textbox.setText(display_amount_deducted)
 
-        self.outstanding_amount_textbox.setText(
-            str(occurrence_to_display.get("outstanding_amount"))
-        )
+        outstanding_amount = occurrence_to_display.get("outstanding_amount")
+        display_outstanding_amount = f"{outstanding_amount:,.2f}"
+        self.outstanding_amount_textbox.setText(display_outstanding_amount)
 
         deduction_status_index = self.deduction_status_dropdown.findText(
             occurrence_to_display.get("deduction_status_name")
@@ -380,8 +381,8 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             "category": self.category_dropdown.currentText(),
             "rank": self.rank_dropdown.currentText(),
             "occurrence_id": self.occurrence.get("id"),
-            "uniform_price": self.uniform_price_textbox.text(),
-            "amount_deducted": self.amount_deducted_textbox.text(),
+            "uniform_price": self.uniform_price_textbox.text().replace(",", ""),
+            "amount_deducted": self.amount_deducted_textbox.text().replace(",", ""),
             "deduction_status": self.deduction_status_dropdown.currentText(),
         }
 

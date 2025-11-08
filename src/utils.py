@@ -16,6 +16,8 @@ from src.database.models import (
     Occurrence,
 )
 from sqlalchemy import func
+import pandas as pd
+import os
 
 
 def load_fonts():
@@ -98,9 +100,11 @@ def missing_headers(headers_in_worksheet):
     return headers_missing_in_worksheet
 
 
-def four_dp_decimal(cell_value):
+def two_dp_decimal(cell_value):
     try:
-        return Decimal(cell_value).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+        return Decimal(str(cell_value)).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
     except InvalidOperation:
         return None
 
@@ -117,10 +121,14 @@ def get_date(cell_value):
 
 def assign_outstanding_amount(employee_record_dict, db):
     service_number = employee_record_dict["service_number"]
-    uniform_price = employee_record_dict["uniform_price"]
-    current_amount_deducted = employee_record_dict["amount_deducted"]
 
-    cumulated_deduction = Decimal("0.0000")
+    uniform_price = employee_record_dict["uniform_price"]
+    uniform_price = two_dp_decimal(uniform_price)
+
+    current_amount_deducted = employee_record_dict["amount_deducted"]
+    current_amount_deducted = two_dp_decimal(current_amount_deducted)
+
+    cumulated_deduction = Decimal("0.00")
 
     employee = (
         db.query(Employee).filter(Employee.service_number == service_number).first()
@@ -138,15 +146,24 @@ def assign_outstanding_amount(employee_record_dict, db):
 
             for occurrence in occurrences:
                 amount_deducted = occurrence.amount_deducted
+                amount_deducted = two_dp_decimal(amount_deducted)
+
                 cumulated_deduction += amount_deducted
+                cumulated_deduction = two_dp_decimal(cumulated_deduction)
 
             cumulated_deduction = cumulated_deduction + current_amount_deducted
+            cumulated_deduction = two_dp_decimal(cumulated_deduction)
+
             difference = uniform_price - cumulated_deduction
+            difference = two_dp_decimal(difference)
+
             employee_record_dict["outstanding_amount"] = difference
 
             return employee_record_dict
 
     difference = uniform_price - current_amount_deducted
+    difference = two_dp_decimal(difference)
+
     employee_record_dict["outstanding_amount"] = difference
 
     return employee_record_dict
@@ -155,8 +172,14 @@ def assign_outstanding_amount(employee_record_dict, db):
 def assign_deduction_status(employee_record_dict):
     with SessionLocal() as db:
         uniform_price = employee_record_dict["uniform_price"]
+        uniform_price = two_dp_decimal(uniform_price)
+
         amount_deducted = employee_record_dict["amount_deducted"]
+        amount_deducted = two_dp_decimal(amount_deducted)
+
         difference = uniform_price - amount_deducted
+        difference = two_dp_decimal(difference)
+
         if not uniform_price.is_zero():
 
             if amount_deducted.is_zero():
@@ -209,9 +232,15 @@ def assign_deduction_status(employee_record_dict):
 
 def update_deduction_status(db, occurrence_id, employee_record_dict):
     occurrence = db.query(Occurrence).filter(Occurrence.id == occurrence_id).first()
+
     uniform_price = occurrence.uniform_price
+    uniform_price = two_dp_decimal(uniform_price)
+
     amount_deducted = occurrence.amount_deducted
+    amount_deducted = two_dp_decimal(amount_deducted)
+
     difference = uniform_price - amount_deducted
+    difference = two_dp_decimal(difference)
 
     if not uniform_price.is_zero():
 
@@ -289,7 +318,7 @@ def validate_field(cell_value, header, employee_record_dict):
 
 def validate_amounts(cell_value, header, employee_record_dict):
     if cell_value:
-        amount = four_dp_decimal(cell_value)
+        amount = two_dp_decimal(cell_value)
 
         if amount is None:
             return False
@@ -420,7 +449,7 @@ CATEGORY = [
     "General",
     "Labourer",
     "Medical",
-    "Stores",
+    "Supply",
     "Technician",
     "Warden",
 ]
@@ -463,17 +492,25 @@ def setup_combobox(combobox, role):
 
 
 def calculate_total_amount_deducted(occurrences):
-    total_amount_deducted = Decimal("0.0000")
+    total_amount_deducted = Decimal("0.00")
 
     for occurrence in occurrences:
         amount_deducted = occurrence.get("amount_deducted", None)
+        amount_deducted = two_dp_decimal(amount_deducted)
+
         total_amount_deducted += amount_deducted
+
+    total_amount_deducted = two_dp_decimal(total_amount_deducted)
 
     return total_amount_deducted
 
 
 def final_occurrence_deduction_status(uniform_price, amount_deducted):
+    uniform_price = two_dp_decimal(uniform_price)
+    amount_deducted = two_dp_decimal(amount_deducted)
+
     difference = uniform_price - amount_deducted
+    difference = two_dp_decimal(difference)
 
     if amount_deducted.is_zero():
         return ["No Deduction", difference]
@@ -496,15 +533,20 @@ def same_uniform_price(db, employee_id):
     )
 
     first_uniform_price = occurrences[0].uniform_price
+    first_uniform_price = two_dp_decimal(first_uniform_price)
 
     for occurrence in occurrences:
-        same_price = first_uniform_price == occurrence.uniform_price
+        uniform_price = occurrence.uniform_price
+        uniform_price = two_dp_decimal(uniform_price)
+
+        same_price = first_uniform_price == uniform_price
+
         if same_price:
             continue
         else:
             return (
                 first_uniform_price,
-                occurrence.uniform_price,
+                uniform_price,
                 employee.service_number,
             )
 
@@ -513,14 +555,17 @@ def same_uniform_price(db, employee_id):
 
 def update_outstanding_amount(employee_record_dict, db, occurrence_id, employee_id):
     uniform_price = employee_record_dict["uniform_price"]
+    uniform_price = two_dp_decimal(uniform_price)
+
     current_amount_deducted = employee_record_dict["amount_deducted"]
+    current_amount_deducted = two_dp_decimal(current_amount_deducted)
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     occurrences = (
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
     )
 
-    cumulated_deduction = Decimal("0.0000")
+    cumulated_deduction = Decimal("0.00")
 
     if employee and occurrences:
         for occurrence in occurrences:
@@ -530,7 +575,11 @@ def update_outstanding_amount(employee_record_dict, db, occurrence_id, employee_
                 occurrence.amount_deducted = current_amount_deducted
 
             cumulated_deduction += occurrence.amount_deducted
+            cumulated_deduction = two_dp_decimal(cumulated_deduction)
+
             difference = uniform_price - cumulated_deduction
+            difference = two_dp_decimal(difference)
+
             occurrence.outstanding_amount = difference
 
             employee_record_dict["outstanding_amount"] = difference
@@ -546,14 +595,18 @@ def recalculate_outstanding_amount_after_deletion(db, employee_id):
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
     )
 
-    cumulated_deduction = Decimal("0.0000")
+    cumulated_deduction = Decimal("0.00")
 
     if occurrences:
 
         for occurrence in occurrences:
             amount_deducted = occurrence.amount_deducted
+
             cumulated_deduction += amount_deducted
+            cumulated_deduction = two_dp_decimal(cumulated_deduction)
+
             outstanding_amount = occurrence.uniform_price - cumulated_deduction
+            outstanding_amount = two_dp_decimal(outstanding_amount)
             occurrence.outstanding_amount = outstanding_amount
 
         db.commit()
@@ -565,15 +618,20 @@ def is_exceeded_deduction(db, employee_id):
     occurrences = (
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
     )
-    uniform_price = occurrences[0].uniform_price
 
-    cumulated_deduction = Decimal("0.0000")
+    uniform_price = occurrences[0].uniform_price
+    uniform_price = two_dp_decimal(uniform_price)
+
+    cumulated_deduction = Decimal("0.00")
 
     for occurrence in occurrences:
         amount_deducted = occurrence.amount_deducted
+
         cumulated_deduction += amount_deducted
+        cumulated_deduction = two_dp_decimal(cumulated_deduction)
 
     outstanding_amount = uniform_price - cumulated_deduction
+    outstanding_amount = two_dp_decimal(outstanding_amount)
 
     if outstanding_amount.is_signed():
         return True
@@ -582,7 +640,7 @@ def is_exceeded_deduction(db, employee_id):
 
 
 def get_total_amount_deducted(db, employee_id):
-    total_amount_deducted = Decimal("0.0000")
+    total_amount_deducted = Decimal("0.00")
 
     occurrences = (
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
@@ -590,7 +648,10 @@ def get_total_amount_deducted(db, employee_id):
 
     for occurrence in occurrences:
         amount_deducted = occurrence.amount_deducted
+        amount_deducted = two_dp_decimal(amount_deducted)
+
         total_amount_deducted += amount_deducted
+        total_amount_deducted = two_dp_decimal(total_amount_deducted)
 
     return total_amount_deducted
 
@@ -598,7 +659,7 @@ def get_total_amount_deducted(db, employee_id):
 def get_updated_total_amount_deducted(
     db, employee_id, occurrence_id, current_amount_deducted
 ):
-    total_amount_deducted = Decimal("0.0000")
+    total_amount_deducted = Decimal("0.00")
 
     occurrences = (
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
@@ -610,9 +671,13 @@ def get_updated_total_amount_deducted(
             continue
 
         amount_deducted = occurrence.amount_deducted
+        amount_deducted = two_dp_decimal(amount_deducted)
+
         total_amount_deducted += amount_deducted
+        total_amount_deducted = two_dp_decimal(total_amount_deducted)
 
     updated_total_amount_deducted = total_amount_deducted + current_amount_deducted
+    updated_total_amount_deducted = two_dp_decimal(updated_total_amount_deducted)
 
     return updated_total_amount_deducted
 
@@ -627,16 +692,52 @@ def get_total_amount_deducted_by_service_number(db, service_number):
         db.query(Occurrence).filter(Occurrence.employee_id == employee_id).all()
     )
 
-    total_amount_deducted = Decimal("0.0000")
+    total_amount_deducted = Decimal("0.00")
 
     for occurrence in occurrences:
         amount_deducted = occurrence.amount_deducted
+        amount_deducted = two_dp_decimal(amount_deducted)
+
         total_amount_deducted += amount_deducted
+        total_amount_deducted = two_dp_decimal(total_amount_deducted)
 
     return total_amount_deducted
 
 
 def set_total_amount_deducted_on_employee(db, employee_id, total_amount_deducted):
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
-    employee.total_amount_deducted = total_amount_deducted
+    employee.total_amount_deducted = two_dp_decimal(total_amount_deducted)
+    return True
+
+
+def perform_export(db, file_name, progress_callback=None):
+    records = []
+
+    employees = db.query(Employee).all()
+
+    for index, employee in enumerate(employees):
+        record = {}
+
+        record["Service Number"] = employee.service_number
+        record["Name"] = employee.name
+        record["Gender"] = employee.gender.name
+        record["Unit"] = employee.unit.name
+        record["Grade"] = employee.grade.name
+        record["Rank"] = employee.rank.name
+        record["Category"] = employee.category.name
+        record["Uniform Price"] = str(employee.occurrences[0].uniform_price)
+        record["Amount Deducted"] = str(employee.total_amount_deducted)
+        record["Outstanding Amount"] = str(
+            two_dp_decimal(record["Uniform Price"])
+            - two_dp_decimal(record["Amount Deducted"])
+        )
+
+        percent = (index + 1) / len(employees) * 100
+        progress_callback.emit(percent)
+
+        records.append(record)
+
+    df = pd.DataFrame(records)
+    df.to_excel(file_name, index=False)
+
     return True

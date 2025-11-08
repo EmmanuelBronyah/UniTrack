@@ -18,7 +18,7 @@ categories = [
     "General",
     "Labourer",
     "Medical",
-    "Stores",
+    "Supply",
     "Technician",
     "Warden",
 ]

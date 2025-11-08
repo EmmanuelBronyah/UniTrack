@@ -110,7 +110,7 @@ class Employee(Base):
     rank_id: Mapped[int] = mapped_column(ForeignKey("ranks.id"))
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     total_amount_deducted: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
+        Numeric(12, 4), nullable=False, default=0.00
     )
 
     # Relationships
@@ -135,13 +135,13 @@ class Occurrence(Base):
         ForeignKey("employees.id", ondelete="CASCADE")
     )
     uniform_price: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
+        Numeric(12, 4), nullable=False, default=0.00
     )
     amount_deducted: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
+        Numeric(12, 4), nullable=False, default=0.00
     )
     outstanding_amount: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
+        Numeric(12, 4), nullable=False, default=0.00
     )
     deduction_status_id: Mapped[int] = mapped_column(
         ForeignKey("deduction_statuses.id")
@@ -161,34 +161,3 @@ class Occurrence(Base):
 
     def __repr__(self) -> str:
         return f"Occurrence(id={self.id!r}, employee_id={self.employee_id!r})"
-
-
-class EmployeeRecord(Base):
-    __tablename__ = "employee_records"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    service_number: Mapped[str] = mapped_column(index=True, unique=True)
-    name: Mapped[str] = mapped_column(index=True)
-    unit: Mapped[str] = mapped_column(index=True)
-    grade: Mapped[str] = mapped_column(index=True)
-    appointment_date: Mapped[date] = mapped_column(nullable=True)
-    total_amount: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
-    )
-    amount_deducted: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
-    )
-    outstanding_difference: Mapped[Decimal] = mapped_column(
-        Numeric(12, 4), nullable=False, default=0.0000
-    )
-    full_payment: Mapped[bool] = mapped_column(default=False)
-    no_payment: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now(), nullable=False
-    )
-
-    def __repr__(self) -> str:
-        return f"EmployeeRecords(id={self.id!r}, name={self.name!r}, unit={self.unit!r}, grade={self.grade!r}, total_amount={self.total_amount!r}, amount_deducted={self.amount_deducted!r}, outstanding_difference={self.outstanding_difference!r})"
