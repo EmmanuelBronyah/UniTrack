@@ -60,7 +60,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
 
         if headers_missing_in_worksheet:
             return {
-                "error": f"Column headers ({', '.join(headers_missing_in_worksheet)}) not found.",
+                "error": f"Missing column headers ({', '.join(headers_missing_in_worksheet)})",
                 "records saved": number_of_records_saved,
             }
 
@@ -83,9 +83,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
 
                                 if is_empty:
                                     db.rollback()
-                                    return {
-                                        "error": f"{header.capitalize()} must not be empty."
-                                    }
+                                    return {"error": f"Missing {header.capitalize()}"}
                                 else:
                                     result = validate_field(
                                         cell_value,
@@ -95,11 +93,11 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                                     if not result:
                                         db.rollback()
                                         return {
-                                            "error": f"Invalid Service Number: {cell_value} in Service Number column."
+                                            "error": f"Invalid Service Number: {cell_value} in Service Number column"
                                         }
                                     elif result == "EXCEEDED":
                                         return {
-                                            "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits."
+                                            "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits"
                                         }
                                     else:
                                         employee_record_dict = result
@@ -109,9 +107,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
 
                                 if is_empty:
                                     db.rollback()
-                                    return {
-                                        "error": f"{header.capitalize()} must not be empty."
-                                    }
+                                    return {"error": f"Missing {header.capitalize()}"}
                                 else:
                                     result = select_value(
                                         cell_value, header, employee_record_dict
@@ -119,7 +115,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                                     if not result:
                                         db.rollback()
                                         return {
-                                            "error": f"{header.capitalize()}: {cell_value} does not exist in the database."
+                                            "error": f"{header.capitalize()}: {cell_value} is invalid"
                                         }
                                     else:
                                         employee_record_dict = result
@@ -133,7 +129,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                                 if not result:
                                     db.rollback()
                                     return {
-                                        "error": f"Invalid digits: {cell_value} in {header.capitalize()} column."
+                                        "error": f"Invalid digits: {cell_value} in {header.capitalize()} column"
                                     }
                                 else:
                                     employee_record_dict = result
@@ -146,7 +142,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                     if not result:
                         db.rollback()
                         return {
-                            "error": "Uniform Price column must not be empty",
+                            "error": "Missing Uniform Price",
                         }
                     # Create a new employee if does not exist
                     employee = (
@@ -183,7 +179,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                     if response is not True:
                         db.rollback()
                         return {
-                            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
+                            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})"
                         }
 
                     # Assign Total Amount Deducted
@@ -202,12 +198,12 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
             except OperationalError as e:
                 if "database is locked" in str(e):
                     return {
-                        "error": "Please wait a moment and try again - database busy."
+                        "error": "Please wait a moment and try again - database busy"
                     }
 
     else:
         return {
-            "error": "There should be eight (8) columns.",
+            "error": "Missing eight (8) columns",
             "records saved": number_of_records_saved,
         }
 
@@ -286,7 +282,7 @@ def save_record(db: Session, employee_record: dict) -> dict:
 
                 if is_empty:
                     db.rollback()
-                    return {"error": f"{key.capitalize()} must not be empty."}
+                    return {"error": f"Missing {key.capitalize()}"}
                 else:
                     result = validate_field(
                         value,
@@ -295,12 +291,10 @@ def save_record(db: Session, employee_record: dict) -> dict:
                     )
                     if not result:
                         db.rollback()
-                        return {
-                            "error": f"Invalid Service Number: {value} in Service Number column."
-                        }
+                        return {"error": f"Invalid Service Number: {value}"}
                     elif result == "EXCEEDED":
                         return {
-                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits."
+                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits"
                         }
                     else:
                         employee_record_dict = result
@@ -310,14 +304,12 @@ def save_record(db: Session, employee_record: dict) -> dict:
 
                 if is_empty:
                     db.rollback()
-                    return {"error": f"{key.capitalize()} must not be empty."}
+                    return {"error": f"Missing {key.capitalize()}"}
                 else:
                     result = select_value(value, key, employee_record_dict)
                     if not result:
                         db.rollback()
-                        return {
-                            "error": f"{key.capitalize()}: {value} does not exist in the database."
-                        }
+                        return {"error": f"{key.capitalize()}: {value} is invalid"}
                     else:
                         employee_record_dict = result
 
@@ -327,9 +319,7 @@ def save_record(db: Session, employee_record: dict) -> dict:
 
                 if not result:
                     db.rollback()
-                    return {
-                        "error": f"Invalid digits: {value} in {key.capitalize()} column."
-                    }
+                    return {"error": f"Invalid value: {value} for {key.capitalize()}"}
                 else:
                     employee_record_dict = result
 
@@ -345,7 +335,7 @@ def save_record(db: Session, employee_record: dict) -> dict:
     if not result:
         db.rollback()
         return {
-            "error": "Uniform Price column must not be empty",
+            "error": "Missing Uniform Price",
         }
 
     employee_id = employee_record.get("employee_id")
@@ -426,7 +416,7 @@ def add_record(db: Session, record: dict) -> dict | bool:
 
                 if is_empty:
                     db.rollback()
-                    return {"error": f"{key.capitalize()} must not be empty."}
+                    return {"error": f"Missing {key.capitalize()}"}
                 else:
                     result = validate_field(
                         value,
@@ -435,12 +425,10 @@ def add_record(db: Session, record: dict) -> dict | bool:
                     )
                     if not result:
                         db.rollback()
-                        return {
-                            "error": f"Invalid Service Number: {value} in Service Number column."
-                        }
+                        return {"error": f"Invalid Service Number: {value}"}
                     elif result == "EXCEEDED":
                         return {
-                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits."
+                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits"
                         }
                     else:
                         employee_record_dict = result
@@ -450,14 +438,12 @@ def add_record(db: Session, record: dict) -> dict | bool:
 
                 if is_empty:
                     db.rollback()
-                    return {"error": f"{key.capitalize()} must not be empty."}
+                    return {"error": f"Missing {key.capitalize()}"}
                 else:
                     result = select_value(value, key, employee_record_dict)
                     if not result:
                         db.rollback()
-                        return {
-                            "error": f"{key.capitalize()}: {value} does not exist in the database."
-                        }
+                        return {"error": f"{key.capitalize()}: {value} is invalid"}
                     else:
                         employee_record_dict = result
 
@@ -467,9 +453,7 @@ def add_record(db: Session, record: dict) -> dict | bool:
 
                 if not result:
                     db.rollback()
-                    return {
-                        "error": f"Invalid digits: {value} in {key.capitalize()} column."
-                    }
+                    return {"error": f"Invalid value: {value} for {key.capitalize()}"}
                 else:
                     employee_record_dict = result
 
@@ -479,7 +463,7 @@ def add_record(db: Session, record: dict) -> dict | bool:
     if not result:
         db.rollback()
         return {
-            "error": "Uniform Price column must not be empty",
+            "error": "Missing Uniform Price",
         }
 
     # Create a new employee if does not exist
@@ -517,7 +501,7 @@ def add_record(db: Session, record: dict) -> dict | bool:
     if response is not True:
         db.rollback()
         return {
-            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}. Employee Service Number ({response[2]})."
+            "error": f"Uniform price mismatch {str(response[0]),  str(response[1])}"
         }
 
     # Assign Total Amount Deducted

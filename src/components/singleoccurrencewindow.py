@@ -6,6 +6,7 @@ from src.utils import (
     employee_data_info_success,
     get_total_amount_deducted,
     set_total_amount_deducted_on_employee,
+    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -232,29 +233,58 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.created_at_textbox, 6, 1)
 
         self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setObjectName("SaveButton")
         self.save_button.setFixedSize(QtCore.QSize(140, 35))
         self.save_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#SaveButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#SaveButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#SaveButton:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.save_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.save_button.clicked.connect(self.save_updated_record)
         self.grid_layout.addWidget(
             self.save_button, 6, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
         self.delete_button = QtWidgets.QPushButton("Delete")
+        self.delete_button.setObjectName("DeleteButton")
         self.delete_button.setFixedSize(QtCore.QSize(140, 35))
         self.delete_button.setStyleSheet(
             """
-                background-color: white;
-                color: #8B4513;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#DeleteButton {
+                    background-color: white;
+                    color: #8B4513;
+                    font-weight: bold;
+                    border-radius: 5;
+                    border: 2pt solid #8B4513;
+                }
+                
+                QPushButton#DeleteButton:hover {
+                    color: #B85B19;
+                }
+                
+                QPushButton#DeleteButton:pressed {
+                    color: white;
+                    background-color: #B85B19;
+                }
+                
             """
         )
+        self.delete_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.delete_button.clicked.connect(self.open_delete_dialog)
         self.grid_layout.addWidget(
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -267,11 +297,20 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.loading_info_area_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.info_label = QtWidgets.QLabel("This is information")
+        self.stack_widget = QtWidgets.QWidget()
+        self.info_label_stack = QtWidgets.QStackedLayout(self.stack_widget)
+        self.info_label_stack.setContentsMargins(0, 0, 0, 0)
+
+        self.empty_widget = QtWidgets.QWidget()
+
+        self.info_label = QtWidgets.QLabel()
         self.info_label.wordWrap()
-        self.info_label.setVisible(False)
+
+        self.info_label_stack.addWidget(self.empty_widget)
+        self.info_label_stack.addWidget(self.info_label)
+
         self.loading_info_area_layout.addWidget(
-            self.info_label, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+            self.stack_widget, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
 
         self.loading_indicator_box = QtWidgets.QLabel()
@@ -291,22 +330,22 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             stretch=1,
         )
 
-    def handle_error(self): ...
-
     def display_updated_values(self, response):
         self.loading_indicator_box.setVisible(False)
         self.loading_indicator.stop()
+
+        self.info_label_stack.setCurrentIndex(1)
 
         if "error" in response:
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
-            self.info_label.setVisible(True)
+            show_temporary_message(self.info_label_stack, self.info_label)
             return
 
-        self.info_label.setText("Record saved.")
+        self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
-        self.info_label.setVisible(True)
+        show_temporary_message(self.info_label_stack, self.info_label)
 
         occurrences = response.get("occurrences")
         employee = response.get("employee")
@@ -391,7 +430,6 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             self.updated_employee_record,
         )
         self.save_record_worker.signals.result.connect(self.display_updated_values)
-        self.save_record_worker.signals.error.connect(self.handle_error)
         global_threadpool.start(self.save_record_worker)
 
     def change_total_amount_deducted_on_dashboard(self, total_amount_deducted):

@@ -17,7 +17,6 @@ from src.database.models import (
 )
 from sqlalchemy import func
 import pandas as pd
-import os
 
 
 def load_fonts():
@@ -715,6 +714,9 @@ def perform_export(db, file_name, progress_callback=None):
 
     employees = db.query(Employee).all()
 
+    if not employees:
+        return False
+
     for index, employee in enumerate(employees):
         record = {}
 
@@ -740,4 +742,53 @@ def perform_export(db, file_name, progress_callback=None):
     df = pd.DataFrame(records)
     df.to_excel(file_name, index=False)
 
-    return True
+    number_of_records_exported = len(records)
+
+    return number_of_records_exported
+
+
+def show_temporary_message(stack, employee_data_info, duration=15000):
+    """Fade in the info label, hold for `duration`, then fade out."""
+    fade_in(employee_data_info, stack, duration)
+
+
+def fade_in(employee_data_info, stack, duration):
+    effect = QtWidgets.QGraphicsOpacityEffect(employee_data_info)
+    employee_data_info.setGraphicsEffect(effect)
+    effect.setOpacity(0)
+
+    anim = QtCore.QPropertyAnimation(effect, b"opacity")
+    anim.setDuration(800)
+    anim.setStartValue(0)
+    anim.setEndValue(1)
+
+    def on_fade_in_finished():
+        # Wait `duration` ms, then fade out
+        QtCore.QTimer.singleShot(duration, lambda: fade_out(employee_data_info, stack))
+
+    anim.finished.connect(on_fade_in_finished)
+    anim.start()
+
+    # Keep reference alive
+    employee_data_info.animation = anim
+
+
+def fade_out(employee_data_info, stack):
+    effect = employee_data_info.graphicsEffect()
+    if not effect:
+        return
+
+    anim = QtCore.QPropertyAnimation(effect, b"opacity")
+    anim.setDuration(800)
+    anim.setStartValue(1)
+    anim.setEndValue(0)
+
+    def on_fade_out_finished():
+        stack.setCurrentIndex(0)
+        effect.setOpacity(1)  # reset for next time
+
+    anim.finished.connect(on_fade_out_finished)
+    anim.start()
+
+    # Keep reference alive
+    employee_data_info.animation = anim

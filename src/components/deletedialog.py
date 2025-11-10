@@ -47,30 +47,59 @@ class DeleteDialog(QtWidgets.QDialog):
         self.buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         self.yes_button = QtWidgets.QPushButton("Yes")
+        self.yes_button.setObjectName("YesButton")
         self.yes_button.setFixedSize(QtCore.QSize(140, 35))
         self.yes_button.clicked.connect(self.perform_deletion)
         self.yes_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#YesButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#YesButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#YesButton:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.yes_button.setCursor(QtCore.Qt.PointingHandCursor)
 
         self.buttons_layout.addWidget(self.yes_button)
 
         self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button.setObjectName("CancelButton")
         self.cancel_button.setFixedSize(QtCore.QSize(140, 35))
         self.cancel_button.clicked.connect(self.close_dialog)
         self.cancel_button.setStyleSheet(
             """
-                background-color: white;
-                color: #8B4513;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#CancelButton {
+                    background-color: white;
+                    color: #8B4513;
+                    font-weight: bold;
+                    border-radius: 5;
+                    border: 2pt solid #8B4513;
+                }
+                
+                QPushButton#CancelButton:hover {
+                    color: #B85B19;
+                }
+                
+                QPushButton#CancelButton:pressed {
+                    color: white;
+                    background-color: #B85B19;
+                }
+                
             """
         )
+        self.cancel_button.setCursor(QtCore.Qt.PointingHandCursor)
 
         self.buttons_layout.addWidget(self.cancel_button)
 

@@ -7,6 +7,7 @@ from src.utils import (
     calculate_total_amount_deducted,
     get_total_amount_deducted_by_service_number,
     two_dp_decimal,
+    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -66,10 +67,31 @@ class AddRecordWindow(QtWidgets.QWidget):
         )
 
         self.search_button = QtWidgets.QPushButton()
-        self.search_button.setFixedSize(QtCore.QSize(30, 37))
-        self.search_button.setStyleSheet("background-color: #8B4513;")
+        self.search_button.setObjectName("SearchButton")
+        self.search_button.setFixedSize(QtCore.QSize(29, 34))
+        self.search_button.setStyleSheet(
+            """
+                QPushButton#SearchButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#SearchButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#SearchButton:pressed {
+                    background-color: #8B4513;
+                    color: #8B4513;
+                }
+            """
+        )
         self.search_icon = QtGui.QIcon(":/assets/icons/search")
         self.search_button.setIcon(self.search_icon)
+        self.search_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.search_button.clicked.connect(self.search_employee)
 
         self.service_number_container_layout.addWidget(self.service_number_textbox)
@@ -202,29 +224,58 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.rank_dropdown, 5, 1)
 
         self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setObjectName("SaveButton")
         self.save_button.setFixedSize(QtCore.QSize(140, 35))
         self.save_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#SaveButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#SaveButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#SaveButton:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.save_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.save_button.clicked.connect(self.save_record)
         self.grid_layout.addWidget(
             self.save_button, 5, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
         self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button.setObjectName("CancelButton")
         self.cancel_button.setFixedSize(QtCore.QSize(140, 35))
         self.cancel_button.setStyleSheet(
             """
-                background-color: white;
-                color: #8B4513;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#CancelButton {
+                    background-color: white;
+                    color: #8B4513;
+                    font-weight: bold;
+                    border-radius: 5;
+                    border: 2pt solid #8B4513;
+                }
+                
+                QPushButton#CancelButton:hover {
+                    color: #B85B19;
+                }
+                
+                QPushButton#CancelButton:pressed {
+                    color: white;
+                    background-color: #B85B19;
+                }
+                
             """
         )
+        self.cancel_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.cancel_button.clicked.connect(self.close_window)
         self.grid_layout.addWidget(
             self.cancel_button, 5, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -237,11 +288,20 @@ class AddRecordWindow(QtWidgets.QWidget):
         )
         self.loading_info_area_layout.setContentsMargins(0, 0, 0, 0)
 
+        self.stack_widget = QtWidgets.QWidget()
+        self.info_label_stack = QtWidgets.QStackedLayout(self.stack_widget)
+        self.info_label_stack.setContentsMargins(0, 0, 0, 0)
+
+        self.empty_widget = QtWidgets.QWidget()
+
         self.info_label = QtWidgets.QLabel()
         self.info_label.wordWrap()
-        self.info_label.setVisible(False)
+
+        self.info_label_stack.addWidget(self.empty_widget)
+        self.info_label_stack.addWidget(self.info_label)
+
         self.loading_info_area_layout.addWidget(
-            self.info_label, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+            self.stack_widget, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
 
         self.loading_indicator_box = QtWidgets.QLabel()
@@ -265,12 +325,13 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
 
+        self.info_label_stack.setCurrentIndex(1)
+
         if "error" in response:
             error = response.get("error")
-
             self.info_label.setText(error)
             employee_data_info_error(self.info_label)
-            self.info_label.setVisible(True)
+            show_temporary_message(self.info_label_stack, self.info_label)
 
             self.total_amount_deducted = Decimal("0.00")
 
@@ -314,7 +375,7 @@ class AddRecordWindow(QtWidgets.QWidget):
 
         self.info_label.setText("Record exists")
         employee_data_info_success(self.info_label)
-        self.info_label.setVisible(True)
+        show_temporary_message(self.info_label_stack, self.info_label)
 
         employee = response.get("employee")
         occurrences = response.get("occurrences")
@@ -380,7 +441,21 @@ class AddRecordWindow(QtWidgets.QWidget):
         try:
             difference = uniform_price - (amount_deducted + self.total_amount_deducted)
         except AttributeError:
-            difference = uniform_price - amount_deducted
+            try:
+                difference = uniform_price - amount_deducted
+            except TypeError:
+                self.info_label_stack.setCurrentIndex(1)
+                self.info_label.setText(f"Invalid digits")
+                employee_data_info_error(self.info_label)
+                show_temporary_message(self.info_label_stack, self.info_label)
+                return
+
+        except TypeError:
+            self.info_label_stack.setCurrentIndex(1)
+            self.info_label.setText(f"Invalid digits")
+            employee_data_info_error(self.info_label)
+            show_temporary_message(self.info_label_stack, self.info_label)
+            return
 
         difference = two_dp_decimal(difference)
         display_difference = f"{difference:,.2f}"
@@ -422,16 +497,18 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
 
+        self.info_label_stack.setCurrentIndex(1)
+
         if isinstance(response, dict):
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
-            self.info_label.setVisible(True)
+            show_temporary_message(self.info_label_stack, self.info_label)
             return
 
         self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
-        self.info_label.setVisible(True)
+        show_temporary_message(self.info_label_stack, self.info_label)
 
         # Update Total Amount Deducted
         service_number = self.service_number_textbox.text()

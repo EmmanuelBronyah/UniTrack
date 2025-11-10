@@ -128,6 +128,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                 "Deduction Status",
             ]
         )
+        self.occurrence_table.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.occurrence_table.cellClicked.connect(self.open_single_occurrence_window)
 
         header = self.occurrence_table.horizontalHeader()
@@ -276,17 +277,31 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.form_layout.addWidget(self.deduction_status_widget, 1, 2)
 
         self.view_button = QtWidgets.QPushButton("View")
+        self.view_button.setObjectName("ViewButton")
         self.view_button.setFixedHeight(25)
         self.view_button.setFixedWidth(45)
         self.view_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
-                font-size: 8.5pt;
+                QPushButton#ViewButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;
+                    font-size: 9px;   
+                }
+                
+                QPushButton#ViewButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#ViewButton:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.view_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.view_button.clicked.connect(
             lambda: self.open_final_occurrence_window(self.employee_data)
         )

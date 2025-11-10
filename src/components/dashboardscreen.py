@@ -14,6 +14,7 @@ from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
     perform_export,
+    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.components.addrecordwindow import AddRecordWindow
@@ -55,16 +56,23 @@ class DashboardScreen(QtWidgets.QWidget):
         )
 
         self.search_bar = QtWidgets.QLineEdit()
+        self.search_bar.setObjectName("SearchBar")
         self.search_bar.setPlaceholderText("Search...")
         self.search_bar.setFixedWidth(455)
         self.search_bar.textChanged.connect(self.search_employee)
         self.search_bar.setStyleSheet(
             """
-                background-color: #ADADAD; 
-                padding: 8 0 8 10; 
-                color: #3B3B3B; 
-                font-weight: bold; 
-                border-radius: 5;
+                QLineEdit#SearchBar {
+                    background-color: #ADADAD; 
+                    padding: 8 0 8 10; 
+                    color: #3B3B3B; 
+                    font-weight: bold; 
+                    border-radius: 5;   
+                }
+                
+                QLineEdit#SearchBar:hover {
+                    background-color: #C4C4C4;
+                }
             """
         )
 
@@ -90,48 +98,90 @@ class DashboardScreen(QtWidgets.QWidget):
         self.buttons_row_layout.setSpacing(100)
 
         self.add_record_button = QtWidgets.QPushButton("Add record")
+        self.add_record_button.setObjectName("AddRecordButton")
         self.add_record_button.setFixedHeight(40)
         self.add_record_button.setFixedWidth(120)
         self.add_record_button.clicked.connect(self.open_add_record_window)
         self.add_record_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#AddRecordButton {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#AddRecordButton:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#AddRecordButton:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.add_record_button.setCursor(QtCore.Qt.PointingHandCursor)
 
         self.import_export_button_layout = QtWidgets.QHBoxLayout()
         self.import_export_button_layout.setSpacing(20)
         self.import_export_button_layout.setContentsMargins(0, 0, 0, 0)
 
         self.import_data_button = QtWidgets.QPushButton("Import data")
+        self.import_data_button.setObjectName("ImportDataButton")
         self.import_data_button.setFixedHeight(40)
         self.import_data_button.setFixedWidth(120)
         self.import_data_button.setStyleSheet(
             """
-                background-color: white;
-                color: #8B4513;
-                font-weight: bold;
-                border-radius: 5;
-                border: 2pt solid #8B4513;
+                QPushButton#ImportDataButton {
+                    background-color: white;
+                    color: #8B4513;
+                    font-weight: bold;
+                    border-radius: 5;
+                    border: 2pt solid #8B4513;
+                }
+                
+                QPushButton#ImportDataButton:hover {
+                    color: #B85B19;
+                }
+                
+                QPushButton#ImportDataButton:pressed {
+                    color: white;
+                    background-color: #B85B19;
+                }
+                
             """
         )
+        self.import_data_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.import_data_button.clicked.connect(self.import_data)
 
         self.export_button = QtWidgets.QPushButton("Export data")
+        self.export_button.setObjectName("ExportData")
         self.export_button.setFixedHeight(40)
         self.export_button.setFixedWidth(120)
         self.export_button.clicked.connect(self.open_export_dialog)
         self.export_button.setStyleSheet(
             """
-                background-color: #8B4513;
-                color: white;
-                font-weight: bold;
-                border-radius: 5;
+                QPushButton#ExportData {
+                    background-color: #8B4513;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 5;   
+                }
+                
+                QPushButton#ExportData:hover {
+                    background-color: #B85B19;
+                    color: white;
+                }
+                
+                QPushButton#ExportData:pressed {
+                    background-color: white;
+                    color: #8B4513;
+                }
             """
         )
+        self.export_button.setCursor(QtCore.Qt.PointingHandCursor)
 
         self.import_export_button_layout.addWidget(self.import_data_button)
         self.import_export_button_layout.addWidget(self.export_button)
@@ -170,6 +220,7 @@ class DashboardScreen(QtWidgets.QWidget):
                 "Amount Deducted",
             ]
         )
+        self.employee_table.setCursor(QtCore.Qt.PointingHandCursor)
         self.employee_table.cellClicked.connect(self.get_service_number_from_cell)
 
         header = self.employee_table.horizontalHeader()
@@ -197,6 +248,8 @@ class DashboardScreen(QtWidgets.QWidget):
         self.progress_employee_data_stack = QtWidgets.QStackedLayout(self.stack_widget)
         self.progress_employee_data_stack.setContentsMargins(0, 0, 0, 0)
 
+        self.empty_widget = QtWidgets.QWidget()
+
         self.progress_bar = QtWidgets.QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
@@ -222,6 +275,7 @@ class DashboardScreen(QtWidgets.QWidget):
         )
 
         self.employee_data_info = QtWidgets.QLabel()
+        self.employee_data_info.setFixedWidth(420)
         self.employee_data_info.setWordWrap(True)
         self.employee_data_info.setStyleSheet(
             """
@@ -233,9 +287,10 @@ class DashboardScreen(QtWidgets.QWidget):
             """
         )
 
+        self.progress_employee_data_stack.addWidget(self.empty_widget)
         self.progress_employee_data_stack.addWidget(self.progress_bar)
         self.progress_employee_data_stack.addWidget(self.employee_data_info)
-        self.progress_employee_data_stack.setCurrentIndex(1)
+        self.progress_employee_data_stack.setCurrentIndex(2)
 
         self.loading_indicator_box = QtWidgets.QLabel()
         self.loading_indicator_box.setFixedSize(45, 45)
@@ -278,23 +333,24 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator_box.setVisible(False)
 
         if "error" in response:
+            show_temporary_message(
+                self.progress_employee_data_stack, self.employee_data_info
+            )
             error = response.get("error", None)
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
-        else:
-            self.employee_data_info.setText(f"Retrieved 1 employee record.")
-            employee_data_info_success(self.employee_data_info)
+            return
 
-            # show occurrence window
-            self.occurrence_window = OccurrenceWindow(
-                employee_data=response,
-                employee_row_number=self.row_number_of_employee_clicked,
-                func=self.display_modified_employee_data,
-                func_2=self.remove_employee_from_table,
-                func_3=self.update_total_amount_on_dashboard,
-            )
-            self.occurrence_window.setWindowModality(QtCore.Qt.ApplicationModal)
-            self.occurrence_window.show()
+        # show occurrence window
+        self.occurrence_window = OccurrenceWindow(
+            employee_data=response,
+            employee_row_number=self.row_number_of_employee_clicked,
+            func=self.display_modified_employee_data,
+            func_2=self.remove_employee_from_table,
+            func_3=self.update_total_amount_on_dashboard,
+        )
+        self.occurrence_window.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.occurrence_window.show()
 
     def get_employee_data(self, service_number):
         with SessionLocal() as db:
@@ -368,8 +424,14 @@ class DashboardScreen(QtWidgets.QWidget):
             return response
 
     def handle_records(self, response):
+        # Re-enable window
+        self.setEnabled(True)
+
         # Show employee data info label
-        self.progress_employee_data_stack.setCurrentIndex(1)
+        self.progress_employee_data_stack.setCurrentIndex(2)
+        show_temporary_message(
+            self.progress_employee_data_stack, self.employee_data_info
+        )
 
         error = response.get("error", None)
         records_saved = response.get("records saved", None)
@@ -379,7 +441,7 @@ class DashboardScreen(QtWidgets.QWidget):
             employee_data_info_error(self.employee_data_info)
         else:
             self.employee_data_info.setText(
-                f"{records_saved if records_saved else '0'} records recorded"
+                f"Import complete: {records_saved if records_saved else '0'} records"
             )
             employee_data_info_success(self.employee_data_info)
 
@@ -402,8 +464,11 @@ class DashboardScreen(QtWidgets.QWidget):
         if not file_path:
             return
 
+        # Disable window
+        self.setEnabled(False)
+
         self.progress_bar.setValue(0)
-        self.progress_employee_data_stack.setCurrentIndex(0)
+        self.progress_employee_data_stack.setCurrentIndex(1)
 
         with SessionLocal() as db:
             save_from_file_worker = Worker(save_from_file, db, file_path)
@@ -461,10 +526,14 @@ class DashboardScreen(QtWidgets.QWidget):
         self.add_record_window.close()
 
     def display_search_result(self, response):
+        self.progress_employee_data_stack.setCurrentIndex(2)
+
         if not response:
             self.employee_data_info.setText("No record found")
             employee_data_info_error(self.employee_data_info)
-            self.employee_data_info.setVisible(True)
+            show_temporary_message(
+                self.progress_employee_data_stack, self.employee_data_info
+            )
             return
 
         self.employee_table.setRowCount(0)
@@ -555,15 +624,27 @@ class DashboardScreen(QtWidgets.QWidget):
                 )
 
     def export_data_result(self, response):
-        self.progress_employee_data_stack.setCurrentIndex(1)
+        # Re-enable window
+        self.setEnabled(True)
 
-        if not response:
-            self.employee_data_info.setText("An error occurred - Retry export")
+        self.progress_employee_data_stack.setCurrentIndex(2)
+
+        if response is False:
+            self.employee_data_info.setText(f"No data to export")
             employee_data_info_error(self.employee_data_info)
+            show_temporary_message(
+                self.progress_employee_data_stack, self.employee_data_info
+            )
             return
 
-        self.employee_data_info.setText("Data generated")
+        number_of_exported_records = response
+        self.employee_data_info.setText(
+            f"Export complete: {number_of_exported_records} records"
+        )
         employee_data_info_success(self.employee_data_info)
+        show_temporary_message(
+            self.progress_employee_data_stack, self.employee_data_info
+        )
 
     def export_data(self, file_name, progress_callback=None):
         progress_callback = progress_callback
@@ -572,8 +653,11 @@ class DashboardScreen(QtWidgets.QWidget):
             return result
 
     def start_export(self, file_name):
+        # Disable window
+        self.setEnabled(False)
+
         self.progress_bar.setValue(0)
-        self.progress_employee_data_stack.setCurrentIndex(0)
+        self.progress_employee_data_stack.setCurrentIndex(1)
 
         self.export_worker = Worker(self.export_data, file_name)
         self.export_worker.kwargs["progress_callback"] = (
