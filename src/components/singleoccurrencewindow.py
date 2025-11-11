@@ -6,7 +6,6 @@ from src.utils import (
     employee_data_info_success,
     get_total_amount_deducted,
     set_total_amount_deducted_on_employee,
-    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -340,12 +339,10 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
-            show_temporary_message(self.info_label_stack, self.info_label)
             return
 
         self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
-        show_temporary_message(self.info_label_stack, self.info_label)
 
         occurrences = response.get("occurrences")
         employee = response.get("employee")

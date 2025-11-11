@@ -14,7 +14,6 @@ from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
     perform_export,
-    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.components.addrecordwindow import AddRecordWindow
@@ -22,6 +21,8 @@ from src.components.threadpool_manager import global_threadpool
 
 
 class DashboardScreen(QtWidgets.QWidget):
+    switch_to_account = QtCore.Signal(object)
+
     def __init__(self):
         super().__init__()
         self.setup_window()
@@ -80,6 +81,8 @@ class DashboardScreen(QtWidgets.QWidget):
         self.profile_container.setStyleSheet("margin-right: 10;")
         self.profile_icon = QtGui.QPixmap(":/assets/icons/account")
         self.profile_container.setPixmap(self.profile_icon)
+        self.profile_container.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.profile_container.clicked.connect(self.switch_to_account_window)
 
         self.top_row_layout.addWidget(self.dashboard_text)
         self.top_row_layout.addSpacing(120)
@@ -290,7 +293,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.progress_employee_data_stack.addWidget(self.empty_widget)
         self.progress_employee_data_stack.addWidget(self.progress_bar)
         self.progress_employee_data_stack.addWidget(self.employee_data_info)
-        self.progress_employee_data_stack.setCurrentIndex(2)
+        self.progress_employee_data_stack.setCurrentIndex(0)
 
         self.loading_indicator_box = QtWidgets.QLabel()
         self.loading_indicator_box.setFixedSize(45, 45)
@@ -333,12 +336,10 @@ class DashboardScreen(QtWidgets.QWidget):
         self.loading_indicator_box.setVisible(False)
 
         if "error" in response:
-            show_temporary_message(
-                self.progress_employee_data_stack, self.employee_data_info
-            )
             error = response.get("error", None)
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
+            self.progress_employee_data_stack.setCurrentIndex(2)
             return
 
         # show occurrence window
@@ -424,25 +425,18 @@ class DashboardScreen(QtWidgets.QWidget):
             return response
 
     def handle_records(self, response):
-        # Re-enable window
         self.setEnabled(True)
 
-        # Show employee data info label
-        self.progress_employee_data_stack.setCurrentIndex(2)
-        show_temporary_message(
-            self.progress_employee_data_stack, self.employee_data_info
-        )
+        error = response.get("error")
+        records_saved = response.get("records saved", 0)
 
-        error = response.get("error", None)
-        records_saved = response.get("records saved", None)
+        self.progress_employee_data_stack.setCurrentIndex(2)
 
         if error:
-            self.employee_data_info.setText(f"{error}")
+            self.employee_data_info.setText(error)
             employee_data_info_error(self.employee_data_info)
         else:
-            self.employee_data_info.setText(
-                f"Import complete: {records_saved if records_saved else '0'} records"
-            )
+            self.employee_data_info.setText(f"Import complete: {records_saved} records")
             employee_data_info_success(self.employee_data_info)
 
         # Commence records retrieval from db
@@ -526,15 +520,14 @@ class DashboardScreen(QtWidgets.QWidget):
         self.add_record_window.close()
 
     def display_search_result(self, response):
-        self.progress_employee_data_stack.setCurrentIndex(2)
 
         if not response:
             self.employee_data_info.setText("No record found")
             employee_data_info_error(self.employee_data_info)
-            show_temporary_message(
-                self.progress_employee_data_stack, self.employee_data_info
-            )
-            return
+
+            # Little hack so the employee data info label shows
+            self.progress_employee_data_stack.setCurrentIndex(0)
+            self.progress_employee_data_stack.setCurrentIndex(2)
 
         self.employee_table.setRowCount(0)
 
@@ -632,9 +625,6 @@ class DashboardScreen(QtWidgets.QWidget):
         if response is False:
             self.employee_data_info.setText(f"No data to export")
             employee_data_info_error(self.employee_data_info)
-            show_temporary_message(
-                self.progress_employee_data_stack, self.employee_data_info
-            )
             return
 
         number_of_exported_records = response
@@ -642,9 +632,6 @@ class DashboardScreen(QtWidgets.QWidget):
             f"Export complete: {number_of_exported_records} records"
         )
         employee_data_info_success(self.employee_data_info)
-        show_temporary_message(
-            self.progress_employee_data_stack, self.employee_data_info
-        )
 
     def export_data(self, file_name, progress_callback=None):
         progress_callback = progress_callback
@@ -675,6 +662,9 @@ class DashboardScreen(QtWidgets.QWidget):
             return
 
         self.start_export(file_name)
+
+    def switch_to_account_window(self):
+        self.switch_to_account.emit(True)
 
     def setup_dashboard_screen(self):
         self.setup_container()

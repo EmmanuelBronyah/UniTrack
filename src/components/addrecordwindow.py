@@ -7,7 +7,6 @@ from src.utils import (
     calculate_total_amount_deducted,
     get_total_amount_deducted_by_service_number,
     two_dp_decimal,
-    show_temporary_message,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -331,7 +330,6 @@ class AddRecordWindow(QtWidgets.QWidget):
             error = response.get("error")
             self.info_label.setText(error)
             employee_data_info_error(self.info_label)
-            show_temporary_message(self.info_label_stack, self.info_label)
 
             self.total_amount_deducted = Decimal("0.00")
 
@@ -375,7 +373,6 @@ class AddRecordWindow(QtWidgets.QWidget):
 
         self.info_label.setText("Record exists")
         employee_data_info_success(self.info_label)
-        show_temporary_message(self.info_label_stack, self.info_label)
 
         employee = response.get("employee")
         occurrences = response.get("occurrences")
@@ -447,14 +444,12 @@ class AddRecordWindow(QtWidgets.QWidget):
                 self.info_label_stack.setCurrentIndex(1)
                 self.info_label.setText(f"Invalid digits")
                 employee_data_info_error(self.info_label)
-                show_temporary_message(self.info_label_stack, self.info_label)
                 return
 
         except TypeError:
             self.info_label_stack.setCurrentIndex(1)
             self.info_label.setText(f"Invalid digits")
             employee_data_info_error(self.info_label)
-            show_temporary_message(self.info_label_stack, self.info_label)
             return
 
         difference = two_dp_decimal(difference)
@@ -497,18 +492,18 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.loading_indicator.stop()
         self.loading_indicator_box.setVisible(False)
 
+        # Little hack so the info label is shown
+        self.info_label_stack.setCurrentIndex(0)
         self.info_label_stack.setCurrentIndex(1)
 
         if isinstance(response, dict):
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
-            show_temporary_message(self.info_label_stack, self.info_label)
             return
 
         self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
-        show_temporary_message(self.info_label_stack, self.info_label)
 
         # Update Total Amount Deducted
         service_number = self.service_number_textbox.text()

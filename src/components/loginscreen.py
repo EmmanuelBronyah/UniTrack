@@ -19,12 +19,15 @@ class LoginScreen(QtWidgets.QWidget):
 
     def setup_container(self):
         self.container_layout = QtWidgets.QHBoxLayout(self)
-        self.container_layout.setSpacing(170)
+        self.container_layout.setSpacing(250)
         self.container_layout.setContentsMargins(0, 0, 0, 0)
         self.container_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
     def setup_left_section(self):
-        left_section_layout = QtWidgets.QHBoxLayout()
+        left_section_widget = QtWidgets.QWidget()
+        left_section_widget.setContentsMargins(0, 0, 0, 0)
+
+        left_section_layout = QtWidgets.QHBoxLayout(left_section_widget)
         left_section_layout.setSpacing(8)
         left_section_layout.setContentsMargins(70, 0, 0, 0)
         left_section_layout.setObjectName("leftSectionLayout")
@@ -43,10 +46,15 @@ class LoginScreen(QtWidgets.QWidget):
         left_section_layout.addWidget(unitrack_label)
         left_section_layout.addWidget(icon_label)
 
-        self.container_layout.addLayout(left_section_layout)
+        self.container_layout.addWidget(
+            left_section_widget, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
 
     def setup_right_section(self):
-        right_section_layout = QtWidgets.QVBoxLayout()
+        right_section_widget = QtWidgets.QWidget()
+        right_section_widget.setContentsMargins(0, 0, 0, 0)
+
+        right_section_layout = QtWidgets.QVBoxLayout(right_section_widget)
         right_section_layout.setSpacing(60)
         right_section_layout.setContentsMargins(0, 0, 70, 0)
 
@@ -61,10 +69,8 @@ class LoginScreen(QtWidgets.QWidget):
         username_textbox.setPlaceholderText("Username")
         username_textbox.textEdited.connect(self.get_username)
 
-        # layout for password textbox and visibility icon button
-        password_visibility_icon_box = QtWidgets.QHBoxLayout()
-        password_visibility_icon_box.setSpacing(3)
-        password_visibility_icon_box.setContentsMargins(0, 0, 0, 0)
+        self.visible_icon = QtGui.QIcon(":/assets/icons/visible")
+        self.hidden_icon = QtGui.QIcon(":/assets/icons/not_visible")
 
         self.password_textbox = QtWidgets.QLineEdit()
         self.password_textbox.setObjectName("passwordTextbox")
@@ -74,23 +80,14 @@ class LoginScreen(QtWidgets.QWidget):
         self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.password_textbox.textEdited.connect(self.get_password)
 
-        self.visibility_button = QtWidgets.QToolButton()
-        self.visibility_button.setObjectName("iconLabel")
-        self.visibility_button.setFixedHeight(30)
-        self.visibility_button.setFixedWidth(30)
-        self.visibility_button.setCheckable(True)
-        self.visibility_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-
-        visibility_icon = QtGui.QIcon(":/assets/icons/visible")
-        self.visibility_button.setIcon(visibility_icon)
-
-        self.visibility_button.toggled.connect(self.toggle_password_visibility)
-
-        password_visibility_icon_box.addWidget(self.password_textbox)
-        password_visibility_icon_box.addWidget(self.visibility_button)
+        self.password_action = self.password_textbox.addAction(
+            self.hidden_icon, QtWidgets.QLineEdit.TrailingPosition
+        )
+        self.password_action.triggered.connect(self.toggle_password_visibility)
+        self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
 
         right_top_section_layout.addWidget(username_textbox)
-        right_top_section_layout.addLayout(password_visibility_icon_box)
+        right_top_section_layout.addWidget(self.password_textbox)
 
         right_section_layout.addLayout(right_top_section_layout)
 
@@ -106,40 +103,57 @@ class LoginScreen(QtWidgets.QWidget):
         self.login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.login_button.clicked.connect(self.perform_login)
 
+        self.loader_info_widget = QtWidgets.QWidget()
+        self.loader_info_widget.setContentsMargins(0, 0, 0, 0)
+
+        self.loader_info_stack = QtWidgets.QStackedLayout(self.loader_info_widget)
+        self.loader_info_stack.setContentsMargins(0, 0, 0, 0)
+
         self.spinner_box = QtWidgets.QLabel()
         self.spinner_box.setFixedSize(45, 45)
-        self.spinner_box.setVisible(False)
-
         self.movie = QtGui.QMovie(":/assets/icons/spinner-gif")
         self.movie.setScaledSize(self.spinner_box.size())
         self.spinner_box.setMovie(self.movie)
 
-        self.info_box = QtWidgets.QLabel("Please enter username and password")
-        self.info_box.setVisible(False)
+        self.empty_widget = QtWidgets.QWidget()
+
+        self.info_box = QtWidgets.QLabel()
+
+        self.loader_info_stack.addWidget(self.centered_widget(self.empty_widget))
+        self.loader_info_stack.addWidget(self.centered_widget(self.spinner_box))
+        self.loader_info_stack.addWidget(self.centered_widget(self.info_box))
+
+        self.loader_info_stack.setCurrentIndex(0)
 
         right_bottom_section_layout.addWidget(self.login_button)
         right_bottom_section_layout.addWidget(
-            self.spinner_box, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
-        )
-        right_bottom_section_layout.addWidget(
-            self.info_box, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            self.loader_info_widget, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
 
         right_section_layout.addLayout(right_bottom_section_layout)
-        self.container_layout.addLayout(right_section_layout)
+        self.container_layout.addWidget(
+            right_section_widget, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+        )
 
     def setup_login_screen(self):
         self.setup_container()
         self.setup_left_section()
         self.setup_right_section()
 
-    def toggle_password_visibility(self, checked):
-        if checked:
-            self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Normal)
-            self.visibility_button.setIcon(QtGui.QIcon(":/assets/icons/not_visible"))
+    def centered_widget(self, widget):
+        wrapper = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(wrapper)
+        layout.setContentsMargins(45, 0, 0, 0)
+        layout.addWidget(widget, alignment=QtCore.Qt.AlignCenter)
+        return wrapper
+
+    def toggle_password_visibility(self):
+        if self.password_textbox.echoMode() == QtWidgets.QLineEdit.Password:
+            self.password_textbox.setEchoMode(QtWidgets.QLineEdit.Normal)
+            self.password_action.setIcon(self.visible_icon)
         else:
-            self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-            self.visibility_button.setIcon(QtGui.QIcon(":/assets/icons/visible"))
+            self.password_textbox.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.password_action.setIcon(self.hidden_icon)
 
     def get_username(self, text):
         self.username = text
@@ -151,26 +165,24 @@ class LoginScreen(QtWidgets.QWidget):
         exctype, value, tb_str = error_tuple
 
         self.movie.stop()
-        self.spinner_box.setVisible(False)
 
         self.info_box.setText(str(value))
         self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
-        self.info_box.setVisible(True)
+        self.loader_info_stack.setCurrentIndex(2)
 
     def handle_login(self, user):
         self.movie.stop()
-        self.spinner_box.setVisible(False)
 
         if user:
-            self.info_box.setText("Login was successful.")
+            self.info_box.setText("Login successful")
             self.info_box.setStyleSheet("color: #28a745; font-weight: bold;")
-            self.info_box.setVisible(True)
+            self.loader_info_stack.setCurrentIndex(2)
             self.login_success.emit(user)
 
         else:
-            self.info_box.setText("Invalid username or password.")
+            self.info_box.setText("Invalid credentials")
             self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
-            self.info_box.setVisible(True)
+            self.loader_info_stack.setCurrentIndex(2)
 
     def perform_login(self):
 
@@ -178,14 +190,13 @@ class LoginScreen(QtWidgets.QWidget):
         password = getattr(self, "password", "")
 
         if not username or not password:
-            self.info_box.setText("Please enter username and password.")
+            self.info_box.setText("Enter credentials")
             self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
-            self.info_box.setVisible(True)
+            self.loader_info_stack.setCurrentIndex(2)
             return
 
         self.movie.start()
-        self.spinner_box.setVisible(True)
-        self.info_box.setVisible(False)
+        self.loader_info_stack.setCurrentIndex(1)
 
         with SessionLocal() as db:
             worker = Worker(login_user, db, username, password)
