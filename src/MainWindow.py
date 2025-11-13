@@ -6,6 +6,14 @@ from src.components.dashboardscreen import DashboardScreen
 import resources
 from src.components.accountscreen import AccountScreen
 
+try:
+    from ctypes import windll  # Only exists on Windows.
+
+    myappid = "unitrack.unitrack.unitrack.version.1.0.0"
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except ImportError:
+    pass
+
 
 class MainWindow(QtWidgets.QMainWindow):
 
