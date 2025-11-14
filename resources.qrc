@@ -8,6 +8,8 @@
         <file alias="account">assets/icons/account.svg</file>
         <file alias="view">assets/icons/view.svg</file>
         <file alias="spinner-account">assets/icons/spinner-account.gif</file>
+        <file alias="logout">assets/icons/logout.svg</file>
+        <file alias="logout-small">assets/icons/logout-small.svg</file>
     </qresource>
     <qresource prefix="/assets/fonts">
         <file alias="oswald_bold">assets/fonts/Oswald/Oswald-Bold.ttf</file>

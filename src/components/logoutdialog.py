@@ -1,12 +1,12 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
-class DeleteDialog(QtWidgets.QDialog):
+class LogoutDialog(QtWidgets.QDialog):
 
     def __init__(self, func, func_2, parent=None):
         super().__init__(parent)
 
-        self.delete_record = func
+        self.logout_user = func
         self.exit_dialog = func_2
 
         self.setup_window()
@@ -36,11 +36,9 @@ class DeleteDialog(QtWidgets.QDialog):
         self.main_layout = QtWidgets.QVBoxLayout(self.main_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.delete_question = QtWidgets.QLabel(
-            "Are you sure you want to delete this occurrence?"
-        )
+        self.logout_question = QtWidgets.QLabel("Are you sure you want to logout?")
         self.main_layout.addWidget(
-            self.delete_question, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            self.logout_question, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
         )
 
         self.buttons_layout = QtWidgets.QHBoxLayout()
@@ -49,7 +47,7 @@ class DeleteDialog(QtWidgets.QDialog):
         self.yes_button = QtWidgets.QPushButton("Yes")
         self.yes_button.setObjectName("YesButton")
         self.yes_button.setFixedSize(QtCore.QSize(140, 35))
-        self.yes_button.clicked.connect(self.perform_deletion)
+        self.yes_button.clicked.connect(self.perform_logout)
         self.yes_button.setStyleSheet(
             """
                 QPushButton#YesButton {
@@ -107,8 +105,8 @@ class DeleteDialog(QtWidgets.QDialog):
 
         self.container_layout.addWidget(self.main_widget)
 
-    def perform_deletion(self):
-        self.delete_record()
+    def perform_logout(self):
+        self.logout_user()
 
     def close_dialog(self):
         self.exit_dialog()

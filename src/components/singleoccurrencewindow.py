@@ -70,7 +70,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.service_number_textbox = QtWidgets.QLineEdit(text=service_number)
         self.service_number_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.service_number_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.service_number_textbox, 0, 1)
 
@@ -86,7 +86,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.category_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.category_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.category_dropdown, 0, 3)
 
@@ -95,7 +95,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.name_label, 1, 0)
         self.name_textbox = QtWidgets.QLineEdit(text=name)
         self.name_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.name_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.name_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
         uniform_price = self.occurrence["uniform_price"]
@@ -105,7 +107,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.uniform_price_textbox = QtWidgets.QLineEdit(text=display_uniform_price)
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.uniform_price_textbox, 1, 3)
 
@@ -120,7 +122,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.gender_dropdown.setCurrentIndex(index)
 
         self.gender_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.gender_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.gender_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.gender_dropdown, 2, 1)
 
         amount_deducted = self.occurrence["amount_deducted"]
@@ -130,7 +134,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.amount_deducted_textbox = QtWidgets.QLineEdit(text=display_amount_deducted)
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.amount_deducted_textbox, 2, 3)
 
@@ -145,7 +149,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.unit_dropdown.setCurrentIndex(index)
 
         self.unit_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.unit_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.unit_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.unit_dropdown, 3, 1)
 
         outstanding_amount = self.occurrence["outstanding_amount"]
@@ -157,7 +163,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.outstanding_amount_textbox, 3, 3)
 
@@ -172,7 +178,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.grade_dropdown.setCurrentIndex(index)
 
         self.grade_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.grade_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.grade_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.grade_dropdown, 4, 1)
 
         deduction_status = self.occurrence["deduction_status_name"]
@@ -189,7 +197,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.deduction_status_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.deduction_status_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.deduction_status_dropdown, 4, 3)
 
@@ -204,7 +212,9 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         self.rank_dropdown.setCurrentIndex(index)
 
         self.rank_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.rank_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.rank_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.rank_dropdown, 5, 1)
 
         updated_at = self.occurrence["updated_at"]
@@ -215,7 +225,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.updated_at_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.updated_at_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.updated_at_textbox, 5, 3)
 
@@ -227,7 +237,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         )
         self.created_at_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.created_at_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.created_at_textbox, 6, 1)
 
@@ -244,13 +254,13 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 }
                 
                 QPushButton#SaveButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#SaveButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
@@ -277,8 +287,8 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
                 }
                 
                 QPushButton#DeleteButton:pressed {
-                    color: white;
-                    background-color: #B85B19;
+                    color: #67330E;
+                    background-color: white;
                 }
                 
             """

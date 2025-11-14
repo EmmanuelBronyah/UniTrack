@@ -62,12 +62,13 @@ class LoginScreen(QtWidgets.QWidget):
         right_top_section_layout = QtWidgets.QVBoxLayout()
         right_top_section_layout.setSpacing(28)
 
-        username_textbox = QtWidgets.QLineEdit()
-        username_textbox.setObjectName("usernameTextbox")
-        username_textbox.setFixedHeight(40)
-        username_textbox.setFixedWidth(290)
-        username_textbox.setPlaceholderText("Username")
-        username_textbox.textEdited.connect(self.get_username)
+        self.username_textbox = QtWidgets.QLineEdit()
+        self.username_textbox.setObjectName("usernameTextbox")
+        self.username_textbox.setFixedHeight(40)
+        self.username_textbox.setFixedWidth(290)
+        self.username_textbox.setPlaceholderText("Username")
+        self.username_textbox.setStyleSheet("border-radius: 5; padding-left: 8px;")
+        self.username_textbox.textEdited.connect(self.get_username)
 
         self.visible_icon = QtGui.QIcon(":/assets/icons/visible")
         self.hidden_icon = QtGui.QIcon(":/assets/icons/not_visible")
@@ -77,6 +78,7 @@ class LoginScreen(QtWidgets.QWidget):
         self.password_textbox.setFixedHeight(40)
         self.password_textbox.setFixedWidth(290)
         self.password_textbox.setPlaceholderText("Password")
+        self.password_textbox.setStyleSheet("border-radius: 5; padding-left: 8px;")
         self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         self.password_textbox.textEdited.connect(self.get_password)
 
@@ -86,7 +88,7 @@ class LoginScreen(QtWidgets.QWidget):
         self.password_action.triggered.connect(self.toggle_password_visibility)
         self.password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
 
-        right_top_section_layout.addWidget(username_textbox)
+        right_top_section_layout.addWidget(self.username_textbox)
         right_top_section_layout.addWidget(self.password_textbox)
 
         right_section_layout.addLayout(right_top_section_layout)
@@ -100,6 +102,7 @@ class LoginScreen(QtWidgets.QWidget):
         self.login_button.setObjectName("loginButton")
         self.login_button.setFixedHeight(50)
         self.login_button.setFixedWidth(290)
+        self.login_button.setStyleSheet("border-radius: 5;")
         self.login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.login_button.clicked.connect(self.perform_login)
 
@@ -169,6 +172,13 @@ class LoginScreen(QtWidgets.QWidget):
         self.info_box.setText(str(value))
         self.info_box.setStyleSheet("color: #dc3545; font-weight: bold;")
         self.loader_info_stack.setCurrentIndex(2)
+
+    def clear_text_boxes(self):
+        self.username_textbox.clear()
+        self.password_textbox.clear()
+        delattr(self, "username")
+        delattr(self, "password")
+        self.loader_info_stack.setCurrentIndex(0)
 
     def handle_login(self, user):
         self.movie.stop()

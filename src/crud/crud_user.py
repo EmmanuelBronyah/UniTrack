@@ -27,3 +27,27 @@ def login_user(db: Session, username: str, password: str) -> User | None:
         return None
 
     return None
+
+
+def get_user(db: Session):
+    user = db.query(User).first()
+    user_dict = user.__dict__
+    return user_dict
+
+
+def update_user(db: Session, user: dict):
+    db_user = db.query(User).first()
+    db_hash_password = db_user.password
+
+    current_password = user["current_password"]
+    new_password = user["new_password"]
+    username = user["username"]
+
+    is_valid_password = verify_password(current_password, db_hash_password)
+
+    if is_valid_password:
+        db_user.password = hash_password(new_password)
+        db_user.username = username
+        return True
+
+    return False

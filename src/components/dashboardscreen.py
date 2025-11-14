@@ -115,13 +115,13 @@ class DashboardScreen(QtWidgets.QWidget):
                 }
                 
                 QPushButton#AddRecordButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#AddRecordButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
@@ -150,8 +150,8 @@ class DashboardScreen(QtWidgets.QWidget):
                 }
                 
                 QPushButton#ImportDataButton:pressed {
-                    color: white;
-                    background-color: #B85B19;
+                    color: #67330E;
+                    background-color: white;
                 }
                 
             """
@@ -174,13 +174,13 @@ class DashboardScreen(QtWidgets.QWidget):
                 }
                 
                 QPushButton#ExportData:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#ExportData:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
@@ -624,6 +624,12 @@ class DashboardScreen(QtWidgets.QWidget):
 
         if response is False:
             self.employee_data_info.setText(f"No data to export")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        elif isinstance(response, dict):
+            error = response.get("error")
+            self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
             return
 

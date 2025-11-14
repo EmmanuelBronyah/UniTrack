@@ -24,6 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.login_screen.login_success.connect(self.show_dashboard)
         self.dashboard_screen.switch_to_account.connect(self.show_account_screen)
         self.account_screen.previous_screen.connect(self.switch_to_dashboard)
+        self.account_screen.display_splashscreen.connect(self.switch_to_splashscreen)
 
     def setup_window(self):
         self.setWindowIcon(QtGui.QIcon(":/assets/icons/unitrack_icon"))
@@ -70,3 +71,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def switch_to_dashboard(self):
         self.stacked_widget.setCurrentIndex(2)
+
+    def switch_to_splashscreen(self):
+        self.login_screen.clear_text_boxes()
+        self.account_screen.get_username_from_db()
+
+        QtCore.QTimer.singleShot(
+            50,
+            lambda: utils.show_screen(
+                self.splash_screen,
+                lambda: utils.fade_in_screen(self.stacked_widget, self.login_screen),
+            ),
+        )

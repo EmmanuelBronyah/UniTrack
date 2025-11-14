@@ -47,7 +47,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         )
         self.service_number_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.service_number_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.service_number_textbox, 0, 1)
 
@@ -57,7 +57,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.category_textbox = QtWidgets.QLineEdit(readOnly=True, text=category)
         self.category_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.category_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.category_textbox, 0, 3)
 
@@ -66,7 +66,9 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.name_label, 1, 0)
         self.name_textbox = QtWidgets.QLineEdit(readOnly=True, text=name)
         self.name_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.name_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.name_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
         uniform_price = Decimal(self.occurrence["uniform_price"])
@@ -78,7 +80,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         )
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.uniform_price_textbox, 1, 3)
 
@@ -87,7 +89,9 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.gender_label, 2, 0)
         self.gender_textbox = QtWidgets.QLineEdit(readOnly=True, text=gender)
         self.gender_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.gender_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.gender_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.gender_textbox, 2, 1)
 
         amount_deducted = Decimal(self.occurrence["amount_deducted"])
@@ -99,7 +103,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         )
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.amount_deducted_textbox, 2, 3)
 
@@ -108,7 +112,9 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.unit_label, 3, 0)
         self.unit_textbox = QtWidgets.QLineEdit(readOnly=True, text=unit)
         self.unit_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.unit_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.unit_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.unit_textbox, 3, 1)
 
         self.outstanding_amount = Decimal(self.occurrence["outstanding_amount"])
@@ -120,7 +126,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         )
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.outstanding_amount_textbox, 3, 3)
 
@@ -129,7 +135,9 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.grade_label, 4, 0)
         self.grade_textbox = QtWidgets.QLineEdit(readOnly=True, text=grade)
         self.grade_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.grade_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.grade_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.grade_textbox, 4, 1)
 
         deduction_status = self.occurrence["deduction_status"]
@@ -140,7 +148,7 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         )
         self.deduction_status_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.deduction_status_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.deduction_status_textbox, 4, 3)
 
@@ -149,7 +157,9 @@ class FinalOccurrenceWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.rank_label, 5, 0)
         self.rank_textbox = QtWidgets.QLineEdit(readOnly=True, text=rank)
         self.rank_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.rank_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.rank_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.rank_textbox, 5, 1)
 
         self.exceeded_deduction_label = QtWidgets.QLabel("Exceeded Deduction")

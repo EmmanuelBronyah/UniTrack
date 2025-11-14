@@ -62,7 +62,7 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.service_number_textbox = QtWidgets.QLineEdit()
         self.service_number_textbox.setFixedSize(QtCore.QSize(161, 35))
         self.service_number_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
 
         self.search_button = QtWidgets.QPushButton()
@@ -78,13 +78,12 @@ class AddRecordWindow(QtWidgets.QWidget):
                 }
                 
                 QPushButton#SearchButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#SearchButton:pressed {
-                    background-color: #8B4513;
-                    color: #8B4513;
+                    background-color: #B85B19;
                 }
             """
         )
@@ -109,7 +108,7 @@ class AddRecordWindow(QtWidgets.QWidget):
 
         self.category_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.category_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.category_dropdown, 0, 3)
 
@@ -117,7 +116,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.name_label, 1, 0)
         self.name_textbox = QtWidgets.QLineEdit()
         self.name_textbox.setFixedSize(QtCore.QSize(195, 35))
-        self.name_textbox.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.name_textbox.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.name_textbox, 1, 1)
 
         self.uniform_price_label = QtWidgets.QLabel("Uniform Price")
@@ -125,7 +126,7 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.uniform_price_textbox = QtWidgets.QLineEdit()
         self.uniform_price_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.uniform_price_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.uniform_price_textbox.textChanged.connect(
             self.calculate_outstanding_amount
@@ -142,7 +143,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.gender_dropdown.setCurrentIndex(index)
 
         self.gender_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.gender_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.gender_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.gender_dropdown, 2, 1)
 
         self.amount_deducted_label = QtWidgets.QLabel("Amount Deducted")
@@ -150,7 +153,7 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.amount_deducted_textbox = QtWidgets.QLineEdit()
         self.amount_deducted_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.amount_deducted_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.amount_deducted_textbox.textChanged.connect(
             self.calculate_outstanding_amount
@@ -167,7 +170,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.unit_dropdown.setCurrentIndex(index)
 
         self.unit_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.unit_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.unit_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.unit_dropdown, 3, 1)
 
         self.outstanding_amount_label = QtWidgets.QLabel("Outstanding Amount")
@@ -175,7 +180,7 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.outstanding_amount_textbox = QtWidgets.QLineEdit(readOnly=True)
         self.outstanding_amount_textbox.setFixedSize(QtCore.QSize(195, 35))
         self.outstanding_amount_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.outstanding_amount_textbox, 3, 3)
 
@@ -189,7 +194,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.grade_dropdown.setCurrentIndex(index)
 
         self.grade_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.grade_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.grade_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.grade_dropdown, 4, 1)
 
         self.deduction_status_label = QtWidgets.QLabel("Deduction Status")
@@ -205,7 +212,7 @@ class AddRecordWindow(QtWidgets.QWidget):
 
         self.deduction_status_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.deduction_status_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.deduction_status_dropdown, 4, 3)
 
@@ -219,7 +226,9 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.rank_dropdown.setCurrentIndex(index)
 
         self.rank_dropdown.setFixedSize(QtCore.QSize(195, 35))
-        self.rank_dropdown.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.rank_dropdown.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+        )
         self.grid_layout.addWidget(self.rank_dropdown, 5, 1)
 
         self.save_button = QtWidgets.QPushButton("Save")
@@ -235,13 +244,13 @@ class AddRecordWindow(QtWidgets.QWidget):
                 }
                 
                 QPushButton#SaveButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#SaveButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
@@ -268,8 +277,8 @@ class AddRecordWindow(QtWidgets.QWidget):
                 }
                 
                 QPushButton#CancelButton:pressed {
-                    color: white;
-                    background-color: #B85B19;
+                    color: #67330E;
+                    background-color: white;
                 }
                 
             """

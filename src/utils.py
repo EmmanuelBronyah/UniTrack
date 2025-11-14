@@ -725,38 +725,45 @@ def set_total_amount_deducted_on_employee(db, employee_id, total_amount_deducted
 
 
 def perform_export(db, file_name, progress_callback=None):
-    records = []
+    try:
+        records = []
 
-    employees = db.query(Employee).all()
+        employees = db.query(Employee).all()
 
-    if not employees:
-        return False
+        if not employees:
+            return False
 
-    for index, employee in enumerate(employees):
-        record = {}
+        for index, employee in enumerate(employees):
+            record = {}
 
-        record["Service Number"] = employee.service_number
-        record["Name"] = employee.name
-        record["Gender"] = employee.gender.name
-        record["Unit"] = employee.unit.name
-        record["Grade"] = employee.grade.name
-        record["Rank"] = employee.rank.name
-        record["Category"] = employee.category.name
-        record["Uniform Price"] = str(employee.occurrences[0].uniform_price)
-        record["Amount Deducted"] = str(employee.total_amount_deducted)
-        record["Outstanding Amount"] = str(
-            two_dp_decimal(record["Uniform Price"])
-            - two_dp_decimal(record["Amount Deducted"])
-        )
+            record["Service Number"] = employee.service_number
+            record["Name"] = employee.name
+            record["Gender"] = employee.gender.name
+            record["Unit"] = employee.unit.name
+            record["Grade"] = employee.grade.name
+            record["Rank"] = employee.rank.name
+            record["Category"] = employee.category.name
+            record["Uniform Price"] = str(employee.occurrences[0].uniform_price)
+            record["Amount Deducted"] = str(employee.total_amount_deducted)
+            record["Outstanding Amount"] = str(
+                two_dp_decimal(record["Uniform Price"])
+                - two_dp_decimal(record["Amount Deducted"])
+            )
 
-        percent = (index + 1) / len(employees) * 100
-        progress_callback.emit(percent)
+            percent = (index + 1) / len(employees) * 100
+            progress_callback.emit(percent)
 
-        records.append(record)
+            records.append(record)
 
-    df = pd.DataFrame(records)
-    df.to_excel(file_name, index=False)
+        df = pd.DataFrame(records)
+        df.to_excel(file_name, index=False)
 
-    number_of_records_exported = len(records)
+        number_of_records_exported = len(records)
 
-    return number_of_records_exported
+        return number_of_records_exported
+
+    except PermissionError:
+        return {"error": "File is open. Please close file and try again"}
+
+    except Exception:
+        return {"error": "An error occurred. Please try again"}

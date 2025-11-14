@@ -195,7 +195,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.service_number_input.setFixedHeight(35)
         self.service_number_input.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.service_number_layout.addWidget(self.service_number_label)
         self.service_number_layout.addWidget(self.service_number_input)
@@ -207,7 +207,9 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.name_label = QtWidgets.QLabel("Name:")
         self.name_input = QtWidgets.QLineEdit(readOnly=True, text=self.name)
         self.name_input.setFixedHeight(35)
-        self.name_input.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.name_input.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.name_layout.addWidget(self.name_label)
         self.name_layout.addWidget(self.name_input)
         self.form_layout.addWidget(self.name_widget, 0, 1)
@@ -218,7 +220,9 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         self.category_label = QtWidgets.QLabel("Category:")
         self.category_input = QtWidgets.QLineEdit(readOnly=True, text=self.category)
         self.category_input.setFixedHeight(35)
-        self.category_input.setStyleSheet("background-color: #ADADAD; color: #3B3B3B;")
+        self.category_input.setStyleSheet(
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
+        )
         self.category_layout.addWidget(self.category_label)
         self.category_layout.addWidget(self.category_input)
         self.form_layout.addWidget(self.category_widget, 0, 2)
@@ -233,7 +237,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.uniform_price_input.setFixedHeight(35)
         self.uniform_price_input.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.uniform_price_layout.addWidget(self.uniform_price_label)
         self.uniform_price_layout.addWidget(self.uniform_price_input)
@@ -251,7 +255,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.amount_deducted_input.setFixedHeight(35)
         self.amount_deducted_input.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.amount_deducted_layout.addWidget(self.amount_deducted_label)
         self.amount_deducted_layout.addWidget(self.amount_deducted_input)
@@ -270,7 +274,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
         )
         self.deduction_status_input.setFixedHeight(35)
         self.deduction_status_input.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+            "background-color: #ADADAD; color: #3B3B3B; border-radius: 5; padding-left: 8px;"
         )
         self.deduction_status_layout.addWidget(self.deduction_status_label)
         self.deduction_status_layout.addWidget(self.deduction_status_input)
@@ -291,13 +295,13 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#ViewButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#ViewButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )

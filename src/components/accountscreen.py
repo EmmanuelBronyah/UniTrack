@@ -1,9 +1,21 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-from src.utils import setup_combobox
+from src.utils import (
+    setup_combobox,
+    employee_data_info_error,
+    employee_data_info_success,
+)
+from src.components.customlabel import CustomLabel
+import resources
+from src.components.workerclass import Worker
+from src.components.threadpool_manager import global_threadpool
+from src.database.db import SessionLocal
+from src.crud.crud_user import get_user, update_user
+from src.components.logoutdialog import LogoutDialog
 
 
 class AccountScreen(QtWidgets.QMainWindow):
     previous_screen = QtCore.Signal(object)
+    display_splashscreen = QtCore.Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -30,7 +42,13 @@ class AccountScreen(QtWidgets.QMainWindow):
 
         self.top_row_layout = QtWidgets.QHBoxLayout(self.top_row_widget)
         self.top_row_layout.setContentsMargins(20, 0, 0, 0)
-        self.top_row_layout.setSpacing(50)
+
+        self.button_text_widget = QtWidgets.QWidget()
+        self.button_text_widget.setContentsMargins(0, 0, 0, 0)
+
+        self.button_widget_layout = QtWidgets.QHBoxLayout(self.button_text_widget)
+        self.button_widget_layout.setContentsMargins(0, 0, 0, 0)
+        self.button_widget_layout.setSpacing(50)
 
         self.back_button = QtWidgets.QPushButton("Back")
         self.back_button.setObjectName("BackButton")
@@ -45,20 +63,18 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#BackButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#BackButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }"""
         )
         self.back_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.back_button.clicked.connect(self.back_to_dashboard)
-        self.top_row_layout.addWidget(
-            self.back_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
+        self.button_widget_layout.addWidget(self.back_button)
 
         self.account_text = QtWidgets.QLabel(
             "Account", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -73,11 +89,24 @@ class AccountScreen(QtWidgets.QMainWindow):
                 border-radius: 10;
             """
         )
-        self.top_row_layout.addWidget(self.account_text)
+        self.button_widget_layout.addWidget(self.account_text)
 
-        self.container_layout.addWidget(
-            self.top_row_widget, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        self.top_row_layout.addWidget(
+            self.button_text_widget, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
+
+        self.logout_container = CustomLabel()
+        self.logout_container.setStyleSheet("margin-right: 25;")
+        self.logout_icon = QtGui.QPixmap(":/assets/icons/logout-small")
+        self.logout_container.setPixmap(self.logout_icon)
+        self.logout_container.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.logout_container.clicked.connect(self.open_logout_dialog)
+
+        self.top_row_layout.addWidget(
+            self.logout_container, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
+
+        self.container_layout.addWidget(self.top_row_widget)
 
     def setup_edit_profile_widgets(self):
         self.edit_profile_container_widget = QtWidgets.QWidget()
@@ -93,26 +122,38 @@ class AccountScreen(QtWidgets.QMainWindow):
 
         self.edit_profile_grid = QtWidgets.QGridLayout(self.edit_profile_grid_widget)
         self.edit_profile_grid.setContentsMargins(0, 20, 0, 0)
-        self.edit_profile_grid.setHorizontalSpacing(30)
-        self.edit_profile_grid.setVerticalSpacing(15)
+        self.edit_profile_grid.setHorizontalSpacing(20)
+        self.edit_profile_grid.setVerticalSpacing(40)
 
         self.username_label = QtWidgets.QLabel("Username")
         self.username_label.setStyleSheet("color: #3B3B3B; font-weight: bold;")
         self.edit_profile_grid.addWidget(self.username_label, 0, 0)
         self.username_textbox = QtWidgets.QLineEdit()
-        self.username_textbox.setFixedSize(QtCore.QSize(195, 35))
+        self.username_textbox.setFixedSize(QtCore.QSize(250, 35))
         self.username_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; font-weight: bold;"
+            """
+            background-color: #ADADAD;
+            color: #3B3B3B;
+            font-weight: bold;
+            border-radius: 5;
+            padding-left: 8px;
+            """
         )
-        self.edit_profile_grid.addWidget(self.username_textbox, 1, 0)
+        self.edit_profile_grid.addWidget(self.username_textbox, 0, 1)
 
         self.current_password_label = QtWidgets.QLabel("Current Password")
         self.current_password_label.setStyleSheet("color: #3B3B3B; font-weight: bold;")
-        self.edit_profile_grid.addWidget(self.current_password_label, 0, 1)
+        self.edit_profile_grid.addWidget(self.current_password_label, 0, 2)
         self.current_password_textbox = QtWidgets.QLineEdit()
-        self.current_password_textbox.setFixedSize(QtCore.QSize(195, 35))
+        self.current_password_textbox.setFixedSize(QtCore.QSize(250, 35))
         self.current_password_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; font-weight: bold;"
+            """
+            background-color: #ADADAD;
+            color: #3B3B3B;
+            font-weight: bold;
+            border-radius: 5;
+            padding-left: 8px;
+            """
         )
 
         self.visible_icon = QtGui.QIcon(":/assets/icons/visible")
@@ -126,16 +167,22 @@ class AccountScreen(QtWidgets.QMainWindow):
         )
         self.current_password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
 
-        self.edit_profile_grid.addWidget(self.current_password_textbox, 1, 1)
+        self.edit_profile_grid.addWidget(self.current_password_textbox, 0, 3)
 
         self.new_password_label = QtWidgets.QLabel("New Password")
         self.new_password_label.setStyleSheet("color: #3B3B3B; font-weight: bold;")
-        self.edit_profile_grid.addWidget(self.new_password_label, 2, 0)
+        self.edit_profile_grid.addWidget(self.new_password_label, 1, 0)
 
         self.new_password_textbox = QtWidgets.QLineEdit()
-        self.new_password_textbox.setFixedSize(QtCore.QSize(420, 35))
+        self.new_password_textbox.setFixedSize(QtCore.QSize(250, 35))
         self.new_password_textbox.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; font-weight: bold;"
+            """
+            background-color: #ADADAD;
+            color: #3B3B3B;
+            font-weight: bold;
+            border-radius: 5; 
+            padding-left: 8px;
+            """
         )
 
         self.new_password_action = self.new_password_textbox.addAction(
@@ -144,11 +191,18 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.new_password_action.triggered.connect(self.toggle_password_visibility_new)
         self.new_password_textbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
 
-        self.edit_profile_grid.addWidget(self.new_password_textbox, 3, 0, 1, 2)
+        self.edit_profile_grid.addWidget(self.new_password_textbox, 1, 1)
+
+        self.buttons_widget = QtWidgets.QWidget()
+        self.buttons_widget.setContentsMargins(0, 0, 0, 0)
+
+        self.buttons_layout = QtWidgets.QHBoxLayout(self.buttons_widget)
+        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.buttons_layout.setSpacing(30)
 
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.setObjectName("SaveButton")
-        self.save_button.setFixedSize(QtCore.QSize(140, 35))
+        self.save_button.setFixedSize(QtCore.QSize(140, 45))
         self.save_button.setStyleSheet(
             """
                 QPushButton#SaveButton {
@@ -159,25 +213,23 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#SaveButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#SaveButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
         self.save_button.setCursor(QtCore.Qt.PointingHandCursor)
-        # self.save_button.clicked.connect(self.save_record)
-        self.edit_profile_grid.addWidget(
-            self.save_button, 1, 2, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
+        self.save_button.clicked.connect(self.get_user_credentials)
+        self.buttons_layout.addWidget(self.save_button)
 
         self.discard_button = QtWidgets.QPushButton("Discard")
         self.discard_button.setObjectName("DiscardButton")
-        self.discard_button.setFixedSize(QtCore.QSize(140, 35))
+        self.discard_button.setFixedSize(QtCore.QSize(140, 45))
         self.discard_button.setStyleSheet(
             """
                 QPushButton#DiscardButton {
@@ -193,15 +245,22 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#DiscardButton:pressed {
-                    color: white;
-                    background-color: #B85B19;
+                    color: #67330E;
+                    background-color: white;
                 }
                 
             """
         )
         self.discard_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.discard_button.clicked.connect(self.discard_changes)
+        self.buttons_layout.addWidget(self.discard_button)
         self.edit_profile_grid.addWidget(
-            self.discard_button, 3, 2, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+            self.buttons_widget,
+            1,
+            2,
+            1,
+            2,
+            alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
         )
 
         self.edit_profile_container_layout.addWidget(
@@ -215,8 +274,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.filtered_export_layout = QtWidgets.QVBoxLayout(
             self.filtered_export_widgets
         )
-        self.filtered_export_layout.setContentsMargins(0, 0, 0, 0)
-        self.filtered_export_layout.setSpacing(0)
+        self.filtered_export_layout.setContentsMargins(20, 30, 0, 0)
 
         # Separate Layout and Widget for the "Filtered Export" Title
         self.filtered_export_text_widget = QtWidgets.QWidget()
@@ -225,7 +283,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.filtered_export_text_layout = QtWidgets.QHBoxLayout(
             self.filtered_export_text_widget
         )
-        self.filtered_export_text_layout.setContentsMargins(90, 0, 0, 0)
+        self.filtered_export_text_layout.setContentsMargins(0, 0, 0, 0)
 
         self.filtered_export_text = QtWidgets.QLabel(
             "Filtered Export", alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -252,13 +310,20 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.criteria_export_button_widget
         )
         self.criteria_export_button_layout.setContentsMargins(0, 0, 0, 0)
-        self.criteria_export_button_layout.setHorizontalSpacing(50)
+        self.criteria_export_button_layout.setSpacing(30)
 
         self.criteria_label = QtWidgets.QLabel("Criteria")
         self.criteria_label.setStyleSheet("color: #3B3B3B; font-weight: bold;")
         self.criteria_export_button_layout.addWidget(self.criteria_label, 0, 0)
         self.criteria_dropdown = QtWidgets.QComboBox()
-        self.criteria_dropdown.setStyleSheet("color: #3B3B3B; font-weight: bold;")
+        self.criteria_dropdown.setStyleSheet(
+            """
+            background-color: #ADADAD;
+            color: #3B3B3B;
+            font-weight: bold;
+            padding-left: 8px;
+            """
+        )
         self.criteria_dropdown = setup_combobox(
             self.criteria_dropdown, "filter_export_criteria"
         )
@@ -267,15 +332,14 @@ class AccountScreen(QtWidgets.QMainWindow):
         index = self.criteria_dropdown.findText("")
         self.criteria_dropdown.setCurrentIndex(index)
 
-        self.criteria_dropdown.setFixedSize(QtCore.QSize(210, 35))
-        self.criteria_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B;"
+        self.criteria_dropdown.setFixedSize(QtCore.QSize(250, 35))
+        self.criteria_export_button_layout.addWidget(
+            self.criteria_dropdown, 0, 1, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
-        self.criteria_export_button_layout.addWidget(self.criteria_dropdown, 1, 0)
 
         self.export_button = QtWidgets.QPushButton("Export")
         self.export_button.setObjectName("ExportButton")
-        self.export_button.setFixedSize(QtCore.QSize(140, 35))
+        self.export_button.setFixedSize(QtCore.QSize(140, 45))
         self.export_button.setStyleSheet(
             """
                 QPushButton#ExportButton {
@@ -291,22 +355,18 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#ExportButton:pressed {
-                    color: white;
-                    background-color: #B85B19;
+                    color: #67330E;
+                    background-color: white;
                 }
                 
             """
         )
         self.export_button.setCursor(QtCore.Qt.PointingHandCursor)
         self.criteria_export_button_layout.addWidget(
-            self.export_button, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+            self.export_button, 0, 2, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
 
         self.filtered_export_layout.addWidget(self.criteria_export_button_widget)
-
-        self.edit_profile_container_layout.addWidget(
-            self.filtered_export_widgets, stretch=2
-        )
 
         self.back_up_button_container = QtWidgets.QWidget()
         self.back_up_button_container.setContentsMargins(0, 0, 0, 0)
@@ -314,7 +374,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.back_up_button_layout = QtWidgets.QHBoxLayout(
             self.back_up_button_container
         )
-        self.back_up_button_layout.setContentsMargins(0, 0, 10, 0)
+        self.back_up_button_layout.setContentsMargins(0, 10, 10, 0)
 
         self.back_up_button = QtWidgets.QPushButton("Back Up Database")
         self.back_up_button.setObjectName("BackUpButton")
@@ -329,13 +389,13 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }
                 
                 QPushButton#BackUpButton:hover {
-                    background-color: #B85B19;
+                    background-color: #67330E;
                     color: white;
                 }
                 
                 QPushButton#BackUpButton:pressed {
-                    background-color: white;
-                    color: #8B4513;
+                    background-color: #B85B19;
+                    color: white;
                 }
             """
         )
@@ -344,11 +404,19 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.back_up_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
 
-        self.edit_profile_container_layout.addWidget(
-            self.back_up_button_container, stretch=1
+        self.container_layout.addWidget(
+            self.edit_profile_container_widget,
+            stretch=2,
+            alignment=QtCore.Qt.AlignmentFlag.AlignLeft,
         )
 
-        self.container_layout.addWidget(self.edit_profile_container_widget, stretch=6)
+        self.container_layout.addWidget(
+            self.filtered_export_widgets,
+            stretch=2,
+            alignment=QtCore.Qt.AlignmentFlag.AlignLeft,
+        )
+
+        self.container_layout.addWidget(self.back_up_button_container, stretch=1)
 
     def setup_footer_area(self):
         self.footer_widget = QtWidgets.QWidget()
@@ -365,6 +433,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.footer_layout.setContentsMargins(0, 0, 0, 0)
 
         self.stack_widget = QtWidgets.QWidget()
+        self.stack_widget.setContentsMargins(10, 10, 0, 10)
         self.progress_employee_data_stack = QtWidgets.QStackedLayout(self.stack_widget)
         self.progress_employee_data_stack.setContentsMargins(0, 0, 0, 0)
 
@@ -397,15 +466,6 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.employee_data_info = QtWidgets.QLabel()
         self.employee_data_info.setFixedWidth(420)
         self.employee_data_info.setWordWrap(True)
-        self.employee_data_info.setStyleSheet(
-            """
-            background-color: #DBDBDB;
-            color: white;
-            font-weight: bold; 
-            border-radius: 5; 
-            padding: 3;
-            """
-        )
 
         self.progress_employee_data_stack.addWidget(self.empty_widget)
         self.progress_employee_data_stack.addWidget(self.progress_bar)
@@ -414,7 +474,6 @@ class AccountScreen(QtWidgets.QMainWindow):
 
         self.loading_indicator_box = QtWidgets.QLabel()
         self.loading_indicator_box.setFixedSize(45, 45)
-        self.loading_indicator_box.setVisible(False)
 
         self.loading_indicator = QtGui.QMovie(":/assets/icons/spinner-account")
         self.loading_indicator.setScaledSize(self.loading_indicator_box.size())
@@ -437,6 +496,125 @@ class AccountScreen(QtWidgets.QMainWindow):
 
         self.container_layout.addWidget(self.footer_widget, stretch=1)
 
+    def prefill_username_textbox(self):
+        self.get_username_from_db()
+
+    def preset_username_textbox(self, result):
+        self.loading_indicator.stop()
+        self.loading_indicator_box.setVisible(False)
+
+        user = result
+        self.username = user.get("username")
+        self.username_textbox.setText(self.username)
+
+    def get_username(self):
+        with SessionLocal() as db:
+            result = get_user(db)
+            return result
+
+    def get_username_from_db(self):
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
+
+        worker = Worker(self.get_username)
+        worker.signals.result.connect(self.preset_username_textbox)
+        global_threadpool.start(worker)
+
+    def discard_changes(self):
+        self.username_textbox.setText(self.username)
+        self.new_password_textbox.clear()
+        self.current_password_textbox.clear()
+
+    def show_user_update_status(self, response):
+        self.loading_indicator.stop()
+        self.loading_indicator_box.setVisible(False)
+
+        self.progress_employee_data_stack.setCurrentIndex(2)
+
+        if not response:
+            self.employee_data_info.setText(
+                "User credentials update failed. Password mismatch"
+            )
+            employee_data_info_error(self.employee_data_info)
+            self.username_textbox.setText(self.username)
+            self.current_password_textbox.clear()
+            self.new_password_textbox.clear()
+            return
+
+        self.employee_data_info.setText("User credentials updated")
+        employee_data_info_success(self.employee_data_info)
+        return
+
+    def update_user_credentials(self, user):
+        with SessionLocal() as db:
+            result = update_user(db, user)
+            db.commit()
+            return result
+
+    def get_user_credentials(self):
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
+
+        username = self.username_textbox.text()
+        current_password = self.current_password_textbox.text()
+        new_password = self.new_password_textbox.text()
+        user = {}
+
+        if not username:
+            self.loading_indicator.stop()
+            self.loading_indicator_box.setVisible(False)
+
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText("Please enter Username")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        if not current_password:
+            self.loading_indicator.stop()
+            self.loading_indicator_box.setVisible(False)
+
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText("Please enter Current Password")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        if not new_password:
+            self.loading_indicator.stop()
+            self.loading_indicator_box.setVisible(False)
+
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText("Please enter New Password")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        user["username"] = username
+        user["current_password"] = current_password
+        user["new_password"] = new_password
+
+        worker = Worker(self.update_user_credentials, user)
+        worker.signals.result.connect(self.show_user_update_status)
+        global_threadpool.start(worker)
+
+    def start_logout(self):
+        self.get_username_from_db()
+        self.current_password_textbox.clear()
+        self.new_password_textbox.clear()
+        self.progress_employee_data_stack.setCurrentIndex(0)
+
+        self.exit_dialog()
+
+        self.display_splashscreen.emit(True)
+
+    def exit_dialog(self):
+        self.logout_dialog.close()
+
+    def open_logout_dialog(self):
+        self.logout_dialog = LogoutDialog(
+            self.start_logout, self.exit_dialog, parent=self
+        )
+        self.logout_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.logout_dialog.show()
+
     def toggle_password_visibility_current(self):
         if self.current_password_textbox.echoMode() == QtWidgets.QLineEdit.Password:
             self.current_password_textbox.setEchoMode(QtWidgets.QLineEdit.Normal)
@@ -458,6 +636,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.setup_top_row()
         self.setup_edit_profile_widgets()
         self.setup_footer_area()
+        self.prefill_username_textbox()
 
     def back_to_dashboard(self):
         self.previous_screen.emit(True)
