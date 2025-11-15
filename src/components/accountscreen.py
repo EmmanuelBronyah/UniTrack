@@ -3,6 +3,7 @@ from src.utils import (
     setup_combobox,
     employee_data_info_error,
     employee_data_info_success,
+    criteria_export,
 )
 from src.components.customlabel import CustomLabel
 import resources
@@ -11,6 +12,11 @@ from src.components.threadpool_manager import global_threadpool
 from src.database.db import SessionLocal
 from src.crud.crud_user import get_user, update_user
 from src.components.logoutdialog import LogoutDialog
+import os
+from platformdirs import user_data_dir
+from pathlib import Path
+import shutil
+from datetime import datetime
 
 
 class AccountScreen(QtWidgets.QMainWindow):
@@ -362,6 +368,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.export_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.export_button.clicked.connect(self.open_export_dialog)
         self.criteria_export_button_layout.addWidget(
             self.export_button, 0, 2, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
         )
@@ -400,6 +407,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.back_up_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.back_up_button.clicked.connect(self.select_db_backup_file_location)
         self.back_up_button_layout.addWidget(
             self.back_up_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
@@ -614,6 +622,145 @@ class AccountScreen(QtWidgets.QMainWindow):
         )
         self.logout_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
         self.logout_dialog.show()
+
+    def export_data_result(self, response):
+        # Re-enable window
+        self.setEnabled(True)
+
+        self.progress_employee_data_stack.setCurrentIndex(2)
+
+        if response is False:
+            self.employee_data_info.setText(f"No data to export")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        elif isinstance(response, dict):
+            error = response.get("error")
+            self.employee_data_info.setText(f"{error}")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        number_of_exported_records = response
+        self.employee_data_info.setText(
+            f"Export complete: {number_of_exported_records} records"
+        )
+        employee_data_info_success(self.employee_data_info)
+
+    def export_data(self, file_name, criteria, progress_callback=None):
+        progress_callback_function_received = progress_callback
+
+        with SessionLocal() as db:
+            result = criteria_export(
+                db, file_name, criteria, progress_callback_function_received
+            )
+            return result
+
+    def start_export(self, file_name, criteria):
+
+        # Disable window
+        self.setEnabled(False)
+
+        self.progress_bar.setValue(0)
+        self.progress_employee_data_stack.setCurrentIndex(1)
+
+        self.export_worker = Worker(self.export_data, file_name, criteria)
+        self.export_worker.kwargs["progress_callback"] = (
+            self.export_worker.signals.progress
+        )
+        self.export_worker.signals.result.connect(self.export_data_result)
+        self.export_worker.signals.progress.connect(self.progress_bar.setValue)
+        global_threadpool.start(self.export_worker)
+
+    def open_export_dialog(self):
+        FILTER_EXPORT_CRITERIA = [
+            "Full Deduction",
+            "Partial Deduction",
+            "Exceeded Deduction",
+            "No Deduction",
+        ]
+
+        criteria = self.criteria_dropdown.currentText()
+
+        if not criteria:
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText(f"Select a criteria")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        elif criteria not in FILTER_EXPORT_CRITERIA:
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText(f"Invalid criteria: {criteria}")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export Data", self.desktop_path, "Excel Files (*.xlsx *.xls)"
+        )
+        if not file_name:
+            return
+
+        self.start_export(file_name, criteria)
+
+    def select_db_backup_file_location(self):
+        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Backup Database", self.desktop_path, "Database Files (*.db)"
+        )
+
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
+
+        if not file_path:
+            return
+
+        APP_NAME, APP_AUTHOR = "UniTrack", "UniTrack"
+
+        data_dir = Path(user_data_dir(APP_NAME, APP_AUTHOR))
+        data_dir.mkdir(parents=True, exist_ok=True)
+        db_path = data_dir / "unitrack.db"
+
+        if not db_path.exists():
+            self.loading_indicator.stop()
+            self.loading_indicator_box.setVisible(False)
+
+            self.progress_employee_data_stack.setCurrentIndex(2)
+            self.employee_data_info.setText(f"Database not found")
+            employee_data_info_error(self.employee_data_info)
+            return
+
+        # Create BackUp Folder in the user's system accounts folder
+        secret_backup_folder = Path(user_data_dir("UniTrack Backups"))
+        secret_backup_folder.mkdir(parents=True, exist_ok=True)
+
+        # Create backup folder in user's selected backup file destination folder
+        backup_destination_folder = os.path.dirname(file_path)
+        os.chdir(backup_destination_folder)
+        os.makedirs("UniTrack Backups", exist_ok=True)
+        file_name = os.path.basename(file_path)
+
+        backup_datetime = datetime.strftime(datetime.now(), "%d-%m-%Y_%H-%M-%S")
+
+        file_name_without_extension = file_name.split(".db")[0]
+        new_file_name = f"{file_name_without_extension}_{backup_datetime}.db"
+        backup_file_destination = os.path.join(
+            backup_destination_folder, "UniTrack Backups", new_file_name
+        )
+
+        shutil.copy2(db_path, backup_file_destination)
+
+        # Copy backup to secret BackUp Folder on user's system
+        secret_backup_folder_path = secret_backup_folder / new_file_name
+        shutil.copy2(db_path, secret_backup_folder_path)
+
+        self.loading_indicator.stop()
+        self.loading_indicator_box.setVisible(False)
+
+        self.progress_employee_data_stack.setCurrentIndex(2)
+        self.employee_data_info.setText(f"Backup created successfully")
+        employee_data_info_success(self.employee_data_info)
 
     def toggle_password_visibility_current(self):
         if self.current_password_textbox.echoMode() == QtWidgets.QLineEdit.Password:

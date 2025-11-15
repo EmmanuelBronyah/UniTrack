@@ -448,11 +448,11 @@ class DashboardScreen(QtWidgets.QWidget):
         global_threadpool.start(self.retrieve_records_worker)
 
     def import_data(self):
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             "Select Records Excel File",
-            desktop_path,
+            self.desktop_path,
             "Excel Files (*.xlsx *.xls)",
         )
         if not file_path:
@@ -662,7 +662,7 @@ class DashboardScreen(QtWidgets.QWidget):
 
     def open_export_dialog(self):
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Export Data", "", "Excel Files (*.xlsx *.xls)"
+            self, "Export Data", self.desktop_path, "Excel Files (*.xlsx *.xls)"
         )
         if not file_name:
             return

@@ -767,3 +767,68 @@ def perform_export(db, file_name, progress_callback=None):
 
     except Exception:
         return {"error": "An error occurred. Please try again"}
+
+
+def criteria_export(db, file_name, criteria, progress_callback):
+    try:
+        records = []
+
+        employees = db.query(Employee).all()
+
+        if not employees:
+            return False
+
+        for index, employee in enumerate(employees):
+            record = {}
+
+            record["Service Number"] = employee.service_number
+            record["Name"] = employee.name
+            record["Gender"] = employee.gender.name
+            record["Unit"] = employee.unit.name
+            record["Grade"] = employee.grade.name
+            record["Rank"] = employee.rank.name
+            record["Category"] = employee.category.name
+            record["Uniform Price"] = str(employee.occurrences[0].uniform_price)
+            record["Amount Deducted"] = str(employee.total_amount_deducted)
+            record["Outstanding Amount"] = str(
+                two_dp_decimal(record["Uniform Price"])
+                - two_dp_decimal(record["Amount Deducted"])
+            )
+
+            total_amount_deducted = two_dp_decimal(record["Amount Deducted"])
+            outstanding_amount = two_dp_decimal(record["Outstanding Amount"])
+
+            if criteria == "Full Deduction":
+                if outstanding_amount.is_zero():
+                    records.append(record)
+
+            elif criteria == "Partial Deduction":
+                if (
+                    not outstanding_amount.is_zero()
+                    and not outstanding_amount.is_signed()
+                ):
+                    records.append(record)
+
+            elif criteria == "No Deduction":
+                if total_amount_deducted.is_zero():
+                    records.append(record)
+
+            elif criteria == "Exceeded Deduction":
+                if outstanding_amount.is_signed():
+                    records.append(record)
+
+            percent = (index + 1) / len(employees) * 100
+            progress_callback.emit(percent)
+
+        df = pd.DataFrame(records)
+        df.to_excel(file_name, index=False)
+
+        number_of_records_exported = len(records)
+
+        return number_of_records_exported
+
+    except PermissionError:
+        return {"error": "File is open. Please close file and try again"}
+
+    except Exception:
+        return {"error": "An error occurred. Please try again"}
