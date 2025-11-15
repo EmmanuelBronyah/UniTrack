@@ -488,8 +488,11 @@ class AddRecordWindow(QtWidgets.QWidget):
         # Update the Total Amount Deducted of an employee record if found on the dashboard when it's record is modified
         service_number = self.service_number_textbox.text()
 
+        with SessionLocal() as db:
+            employee_data = retrieve_employee_record(db, service_number)
+
         self.update_total_amount_on_dashboard_after_add_record(
-            service_number, total_amount_deducted
+            service_number, total_amount_deducted, employee_data
         )
 
     def run_total_amount_deducted_update(self, service_number):

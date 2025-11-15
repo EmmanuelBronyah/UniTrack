@@ -601,7 +601,7 @@ class DashboardScreen(QtWidgets.QWidget):
         )
 
     def update_total_amount_on_dashboard_after_add_record(
-        self, service_number, total_amount_deducted
+        self, service_number, total_amount_deducted, employee_data
     ):
         number_of_rows = self.employee_table.rowCount()
         total_amount_deducted_column = 4
@@ -614,6 +614,44 @@ class DashboardScreen(QtWidgets.QWidget):
                     row,
                     total_amount_deducted_column,
                     QtWidgets.QTableWidgetItem(f"{total_amount_deducted:,.2f}"),
+                )
+                return
+        else:
+            # Insert employee record at the first row on the table if the record is not among the existing records in the table
+
+            name = employee_data["employee"]["name"]
+            grade = employee_data["employee"]["grade_name"]
+            unit = employee_data["employee"]["unit_name"]
+
+            number_of_columns = 5
+
+            for column in range(number_of_columns):
+                headers = [
+                    "service_number",
+                    "name",
+                    "unit",
+                    "grade",
+                    "total_amount_deducted",
+                ]
+                if headers[column] == "grade":
+                    cell_value = grade
+
+                elif headers[column] == "unit":
+                    cell_value = unit
+
+                elif headers[column] == "total_amount_deducted":
+                    cell_value = f"{total_amount_deducted:,.2f}"
+
+                elif headers[column] == "name":
+                    cell_value = name
+
+                elif headers[column] == "service_number":
+                    cell_value = service_number
+
+                self.employee_table.setItem(
+                    0,
+                    column,
+                    QtWidgets.QTableWidgetItem(str(cell_value)),
                 )
 
     def export_data_result(self, response):
