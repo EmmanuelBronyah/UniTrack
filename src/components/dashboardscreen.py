@@ -14,6 +14,7 @@ from src.utils import (
     employee_data_info_success,
     employee_data_info_error,
     perform_export,
+    show_empty_widget,
 )
 from src.components.workerclass import Worker
 from src.components.addrecordwindow import AddRecordWindow
@@ -267,6 +268,7 @@ class DashboardScreen(QtWidgets.QWidget):
                 text-align: center;
                 color: #3B3B3B;
                 font-size: 10pt;
+                font-weight: bold;
                 background-color: white;
             }
             
@@ -435,9 +437,11 @@ class DashboardScreen(QtWidgets.QWidget):
         if error:
             self.employee_data_info.setText(error)
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
         else:
             self.employee_data_info.setText(f"Import complete: {records_saved} records")
             employee_data_info_success(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
 
         # Commence records retrieval from db
         self.loading_indicator.start()
@@ -448,11 +452,11 @@ class DashboardScreen(QtWidgets.QWidget):
         global_threadpool.start(self.retrieve_records_worker)
 
     def import_data(self):
-        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             "Select Records Excel File",
-            self.desktop_path,
+            desktop_path,
             "Excel Files (*.xlsx *.xls)",
         )
         if not file_path:
@@ -524,6 +528,7 @@ class DashboardScreen(QtWidgets.QWidget):
         if not response:
             self.employee_data_info.setText("No record found")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
 
             # Little hack so the employee data info label shows
             self.progress_employee_data_stack.setCurrentIndex(0)
@@ -663,12 +668,14 @@ class DashboardScreen(QtWidgets.QWidget):
         if response is False:
             self.employee_data_info.setText(f"No data to export")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         elif isinstance(response, dict):
             error = response.get("error")
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         number_of_exported_records = response
@@ -676,6 +683,7 @@ class DashboardScreen(QtWidgets.QWidget):
             f"Export complete: {number_of_exported_records} records"
         )
         employee_data_info_success(self.employee_data_info)
+        show_empty_widget(self.progress_employee_data_stack)
 
     def export_data(self, file_name, progress_callback=None):
         progress_callback = progress_callback
@@ -699,8 +707,9 @@ class DashboardScreen(QtWidgets.QWidget):
         global_threadpool.start(self.export_worker)
 
     def open_export_dialog(self):
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Export Data", self.desktop_path, "Excel Files (*.xlsx *.xls)"
+            self, "Export Data", desktop_path, "Excel Files (*.xlsx *.xls)"
         )
         if not file_name:
             return

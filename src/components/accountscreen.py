@@ -4,6 +4,7 @@ from src.utils import (
     employee_data_info_error,
     employee_data_info_success,
     criteria_export,
+    show_empty_widget,
 )
 from src.components.customlabel import CustomLabel
 import resources
@@ -461,6 +462,7 @@ class AccountScreen(QtWidgets.QMainWindow):
                 text-align: center;
                 color: #3B3B3B;
                 font-size: 10pt;
+                font-weight: bold;
                 background-color: white;
             }
             
@@ -547,10 +549,12 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.username_textbox.setText(self.username)
             self.current_password_textbox.clear()
             self.new_password_textbox.clear()
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         self.employee_data_info.setText("User credentials updated")
         employee_data_info_success(self.employee_data_info)
+        show_empty_widget(self.progress_employee_data_stack)
         return
 
     def update_user_credentials(self, user):
@@ -575,6 +579,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText("Please enter Username")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         if not current_password:
@@ -584,6 +589,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText("Please enter Current Password")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         if not new_password:
@@ -593,6 +599,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText("Please enter New Password")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         user["username"] = username
@@ -632,12 +639,14 @@ class AccountScreen(QtWidgets.QMainWindow):
         if response is False:
             self.employee_data_info.setText(f"No data to export")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         elif isinstance(response, dict):
             error = response.get("error")
             self.employee_data_info.setText(f"{error}")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         number_of_exported_records = response
@@ -645,6 +654,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             f"Export complete: {number_of_exported_records} records"
         )
         employee_data_info_success(self.employee_data_info)
+        show_empty_widget(self.progress_employee_data_stack)
 
     def export_data(self, file_name, criteria, progress_callback=None):
         progress_callback_function_received = progress_callback
@@ -729,6 +739,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText(f"Database not found")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         # Create BackUp Folder in the user's system accounts folder
@@ -761,6 +772,7 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.progress_employee_data_stack.setCurrentIndex(2)
         self.employee_data_info.setText(f"Backup created successfully")
         employee_data_info_success(self.employee_data_info)
+        show_empty_widget(self.progress_employee_data_stack)
 
     def toggle_password_visibility_current(self):
         if self.current_password_textbox.echoMode() == QtWidgets.QLineEdit.Password:

@@ -6,6 +6,7 @@ from src.utils import (
     employee_data_info_success,
     get_total_amount_deducted,
     set_total_amount_deducted_on_employee,
+    show_empty_widget,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -349,6 +350,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
+            show_empty_widget(self.info_label_stack)
             return
 
         self.info_label.setText("Record saved")
@@ -407,6 +409,8 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
         total_amount_deducted = employee.get("total_amount_deducted")
 
         self.update_total_amount_on_dashboard(row_number, total_amount_deducted)
+
+        show_empty_widget(self.info_label_stack)
 
     def update_data(self, updated_employee_data):
         with SessionLocal() as db:

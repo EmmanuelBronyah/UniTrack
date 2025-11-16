@@ -7,6 +7,7 @@ from src.utils import (
     calculate_total_amount_deducted,
     get_total_amount_deducted_by_service_number,
     two_dp_decimal,
+    show_empty_widget,
 )
 from src.components.workerclass import Worker
 from src.database.db import SessionLocal
@@ -378,6 +379,8 @@ class AddRecordWindow(QtWidgets.QWidget):
             self.grade_dropdown.setCurrentIndex(index)
             self.grade_dropdown.setEnabled(True)
 
+            show_empty_widget(self.info_label_stack)
+
             return
 
         self.info_label.setText("Record exists")
@@ -414,6 +417,8 @@ class AddRecordWindow(QtWidgets.QWidget):
         display_uniform_price = f"{uniform_price:,.2f}"
         self.uniform_price_textbox.setText(display_uniform_price)
         self.uniform_price_textbox.setReadOnly(True)
+
+        show_empty_widget(self.info_label_stack)
 
     def get_employee(self, service_number):
         with SessionLocal() as db:
@@ -453,12 +458,14 @@ class AddRecordWindow(QtWidgets.QWidget):
                 self.info_label_stack.setCurrentIndex(1)
                 self.info_label.setText(f"Invalid digits")
                 employee_data_info_error(self.info_label)
+                show_empty_widget(self.info_label_stack)
                 return
 
         except TypeError:
             self.info_label_stack.setCurrentIndex(1)
             self.info_label.setText(f"Invalid digits")
             employee_data_info_error(self.info_label)
+            show_empty_widget(self.info_label_stack)
             return
 
         difference = two_dp_decimal(difference)
@@ -512,10 +519,12 @@ class AddRecordWindow(QtWidgets.QWidget):
             error = response.get("error")
             self.info_label.setText(str(error))
             employee_data_info_error(self.info_label)
+            show_empty_widget(self.info_label_stack)
             return
 
         self.info_label.setText("Record saved")
         employee_data_info_success(self.info_label)
+        show_empty_widget(self.info_label_stack)
 
         # Update Total Amount Deducted
         service_number = self.service_number_textbox.text()

@@ -44,16 +44,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stacked_widget.addWidget(self.dashboard_screen)
         self.stacked_widget.addWidget(self.account_screen)
 
-        self.stacked_widget.setCurrentIndex(2)
+        self.stacked_widget.setCurrentIndex(0)
 
         self.setCentralWidget(self.stacked_widget)
-        # QtCore.QTimer.singleShot(
-        #     3500,
-        #     lambda: utils.show_screen(
-        #         self.splash_screen,
-        #         lambda: utils.fade_in_screen(self.stacked_widget, self.login_screen),
-        #     ),
-        # )
+        QtCore.QTimer.singleShot(
+            3500,
+            lambda: utils.show_screen(
+                self.splash_screen,
+                lambda: utils.fade_in_screen(self.stacked_widget, self.login_screen),
+            ),
+        )
 
     def show_dashboard(self):
         QtCore.QTimer.singleShot(

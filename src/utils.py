@@ -832,3 +832,7 @@ def criteria_export(db, file_name, criteria, progress_callback):
 
     except Exception:
         return {"error": "An error occurred. Please try again"}
+
+
+def show_empty_widget(stack):
+    QtCore.QTimer.singleShot(6500, lambda: stack.setCurrentIndex(0))
