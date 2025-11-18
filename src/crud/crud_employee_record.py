@@ -97,7 +97,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
                                         }
                                     elif result == "EXCEEDED":
                                         return {
-                                            "error": f"Invalid Service Number: {cell_value}. Service Number should not exceed seven(7) digits"
+                                            "error": f"Invalid Service Number: {cell_value} — Service Number should not exceed seven(7) digits"
                                         }
                                     else:
                                         employee_record_dict = result
@@ -198,7 +198,7 @@ def save_from_file(db: Session, file_path: str, progress_callback=None) -> dict:
             except OperationalError as e:
                 if "database is locked" in str(e):
                     return {
-                        "error": "Please wait a moment and try again - database busy"
+                        "error": "Please wait a moment and try again — database busy"
                     }
 
     else:
@@ -294,7 +294,7 @@ def save_record(db: Session, employee_record: dict) -> dict:
                         return {"error": f"Invalid Service Number: {value}"}
                     elif result == "EXCEEDED":
                         return {
-                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits"
+                            "error": f"Invalid Service Number: {value} — Service Number should not exceed seven(7) digits"
                         }
                     else:
                         employee_record_dict = result
@@ -428,7 +428,7 @@ def add_record(db: Session, record: dict) -> dict | bool:
                         return {"error": f"Invalid Service Number: {value}"}
                     elif result == "EXCEEDED":
                         return {
-                            "error": f"Invalid Service Number: {value}. Service Number should not exceed seven(7) digits"
+                            "error": f"Invalid Service Number: {value} — Service Number should not exceed seven(7) digits"
                         }
                     else:
                         employee_record_dict = result

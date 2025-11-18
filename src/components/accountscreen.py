@@ -20,6 +20,9 @@ import shutil
 from datetime import datetime
 
 
+# TODO: Fix 1 records, add styled hyphen instead of full stop
+
+
 class AccountScreen(QtWidgets.QMainWindow):
     previous_screen = QtCore.Signal(object)
     display_splashscreen = QtCore.Signal(object)
@@ -651,7 +654,7 @@ class AccountScreen(QtWidgets.QMainWindow):
 
         number_of_exported_records = response
         self.employee_data_info.setText(
-            f"Export complete: {number_of_exported_records} records"
+            f"Export complete — Records: {number_of_exported_records}"
         )
         employee_data_info_success(self.employee_data_info)
         show_empty_widget(self.progress_employee_data_stack)
@@ -695,15 +698,17 @@ class AccountScreen(QtWidgets.QMainWindow):
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText(f"Select a criteria")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
         elif criteria not in FILTER_EXPORT_CRITERIA:
             self.progress_employee_data_stack.setCurrentIndex(2)
             self.employee_data_info.setText(f"Invalid criteria: {criteria}")
             employee_data_info_error(self.employee_data_info)
+            show_empty_widget(self.progress_employee_data_stack)
             return
 
-        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        self.desktop_path = os.path.join(os.path.expanduser("~"), "Documents")
 
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, "Export Data", self.desktop_path, "Excel Files (*.xlsx *.xls)"
@@ -714,17 +719,17 @@ class AccountScreen(QtWidgets.QMainWindow):
         self.start_export(file_name, criteria)
 
     def select_db_backup_file_location(self):
-        self.desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        self.desktop_path = os.path.join(os.path.expanduser("~"), "Documents")
 
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, "Backup Database", self.desktop_path, "Database Files (*.db)"
         )
 
-        self.loading_indicator.start()
-        self.loading_indicator_box.setVisible(True)
-
         if not file_path:
             return
+
+        self.loading_indicator.start()
+        self.loading_indicator_box.setVisible(True)
 
         APP_NAME, APP_AUTHOR = "UniTrack", "UniTrack"
 

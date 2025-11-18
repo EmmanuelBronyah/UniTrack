@@ -763,10 +763,10 @@ def perform_export(db, file_name, progress_callback=None):
         return number_of_records_exported
 
     except PermissionError:
-        return {"error": "File is open. Please close file and try again"}
+        return {"error": "File is open — Please close file and try again"}
 
     except Exception:
-        return {"error": "An error occurred. Please try again"}
+        return {"error": "An error occurred — Please try again"}
 
 
 def criteria_export(db, file_name, criteria, progress_callback):
@@ -828,10 +828,10 @@ def criteria_export(db, file_name, criteria, progress_callback):
         return number_of_records_exported
 
     except PermissionError:
-        return {"error": "File is open. Please close file and try again"}
+        return {"error": "File is open — Please close file and try again"}
 
     except Exception:
-        return {"error": "An error occurred. Please try again"}
+        return {"error": "An error occurred — Please try again"}
 
 
 def show_empty_widget(stack):
