@@ -106,6 +106,7 @@ class DashboardScreen(QtWidgets.QWidget):
         self.add_record_button.setFixedHeight(40)
         self.add_record_button.setFixedWidth(120)
         self.add_record_button.clicked.connect(self.open_add_record_window)
+        self.add_record_button.setAutoDefault(True)
         self.add_record_button.setStyleSheet(
             """
                 QPushButton#AddRecordButton {
@@ -158,12 +159,14 @@ class DashboardScreen(QtWidgets.QWidget):
             """
         )
         self.import_data_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.import_data_button.setAutoDefault(True)
         self.import_data_button.clicked.connect(self.import_data)
 
         self.export_button = QtWidgets.QPushButton("Export data")
         self.export_button.setObjectName("ExportData")
         self.export_button.setFixedHeight(40)
         self.export_button.setFixedWidth(120)
+        self.export_button.setAutoDefault(True)
         self.export_button.clicked.connect(self.open_export_dialog)
         self.export_button.setStyleSheet(
             """
@@ -224,16 +227,23 @@ class DashboardScreen(QtWidgets.QWidget):
                 "Amount Deducted",
             ]
         )
+
+        header_item = self.employee_table.horizontalHeaderItem(0)
+        header_item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+
         self.employee_table.setCursor(QtCore.Qt.PointingHandCursor)
         self.employee_table.cellClicked.connect(self.get_service_number_from_cell)
 
         header = self.employee_table.horizontalHeader()
 
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setStretchLastSection(True)
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
-        self.employee_table.setAlternatingRowColors(True)
+        self.employee_table.setColumnWidth(0, 125)
+        self.employee_table.setColumnWidth(1, 245)
+        self.employee_table.setColumnWidth(2, 145)
+        self.employee_table.setColumnWidth(3, 230)
+        self.employee_table.setColumnWidth(4, 140)
+
         self.employee_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.employee_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 

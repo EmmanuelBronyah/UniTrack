@@ -91,6 +91,7 @@ class AddRecordWindow(QtWidgets.QWidget):
         self.search_icon = QtGui.QIcon(":/assets/icons/search")
         self.search_button.setIcon(self.search_icon)
         self.search_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.search_button.setAutoDefault(True)
         self.search_button.clicked.connect(self.search_employee)
 
         self.service_number_container_layout.addWidget(self.service_number_textbox)
@@ -256,6 +257,7 @@ class AddRecordWindow(QtWidgets.QWidget):
             """
         )
         self.save_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.save_button.setAutoDefault(True)
         self.save_button.clicked.connect(self.save_record)
         self.grid_layout.addWidget(
             self.save_button, 5, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -285,6 +287,7 @@ class AddRecordWindow(QtWidgets.QWidget):
             """
         )
         self.cancel_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.cancel_button.setAutoDefault(True)
         self.cancel_button.clicked.connect(self.close_window)
         self.grid_layout.addWidget(
             self.cancel_button, 5, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter

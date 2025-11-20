@@ -104,6 +104,7 @@ class LoginScreen(QtWidgets.QWidget):
         self.login_button.setFixedWidth(290)
         self.login_button.setStyleSheet("border-radius: 5;")
         self.login_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.login_button.setAutoDefault(True)
         self.login_button.clicked.connect(self.perform_login)
 
         self.loader_info_widget = QtWidgets.QWidget()

@@ -266,6 +266,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             """
         )
         self.save_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.save_button.setAutoDefault(True)
         self.save_button.clicked.connect(self.save_updated_record)
         self.grid_layout.addWidget(
             self.save_button, 6, 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter
@@ -295,6 +296,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
             """
         )
         self.delete_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.delete_button.setAutoDefault(True)
         self.delete_button.clicked.connect(self.open_delete_dialog)
         self.grid_layout.addWidget(
             self.delete_button, 6, 3, alignment=QtCore.Qt.AlignmentFlag.AlignCenter

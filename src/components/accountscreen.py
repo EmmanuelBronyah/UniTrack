@@ -83,6 +83,7 @@ class AccountScreen(QtWidgets.QMainWindow):
                 }"""
         )
         self.back_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.back_button.setAutoDefault(True)
         self.back_button.clicked.connect(self.back_to_dashboard)
         self.button_widget_layout.addWidget(self.back_button)
 
@@ -234,6 +235,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.save_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.save_button.setAutoDefault(True)
         self.save_button.clicked.connect(self.get_user_credentials)
         self.buttons_layout.addWidget(self.save_button)
 
@@ -262,6 +264,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.discard_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.discard_button.setAutoDefault(True)
         self.discard_button.clicked.connect(self.discard_changes)
         self.buttons_layout.addWidget(self.discard_button)
         self.edit_profile_grid.addWidget(
@@ -372,6 +375,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.export_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.export_button.setAutoDefault(True)
         self.export_button.clicked.connect(self.open_export_dialog)
         self.criteria_export_button_layout.addWidget(
             self.export_button, 0, 2, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
@@ -411,6 +415,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             """
         )
         self.back_up_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.back_up_button.setAutoDefault(True)
         self.back_up_button.clicked.connect(self.select_db_backup_file_location)
         self.back_up_button_layout.addWidget(
             self.back_up_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight

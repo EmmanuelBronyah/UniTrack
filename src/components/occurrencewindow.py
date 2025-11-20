@@ -306,6 +306,7 @@ class OccurrenceWindow(QtWidgets.QMainWindow):
             """
         )
         self.view_button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.view_button.setAutoDefault(True)
         self.view_button.clicked.connect(
             lambda: self.open_final_occurrence_window(self.employee_data)
         )

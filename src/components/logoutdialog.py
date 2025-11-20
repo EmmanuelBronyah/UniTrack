@@ -47,6 +47,7 @@ class LogoutDialog(QtWidgets.QDialog):
         self.yes_button = QtWidgets.QPushButton("Yes")
         self.yes_button.setObjectName("YesButton")
         self.yes_button.setFixedSize(QtCore.QSize(140, 35))
+        self.yes_button.setAutoDefault(True)
         self.yes_button.clicked.connect(self.perform_logout)
         self.yes_button.setStyleSheet(
             """
@@ -75,6 +76,7 @@ class LogoutDialog(QtWidgets.QDialog):
         self.cancel_button = QtWidgets.QPushButton("Cancel")
         self.cancel_button.setObjectName("CancelButton")
         self.cancel_button.setFixedSize(QtCore.QSize(140, 35))
+        self.cancel_button.setAutoDefault(True)
         self.cancel_button.clicked.connect(self.close_dialog)
         self.cancel_button.setStyleSheet(
             """
