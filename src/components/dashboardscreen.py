@@ -236,13 +236,9 @@ class DashboardScreen(QtWidgets.QWidget):
 
         header = self.employee_table.horizontalHeader()
 
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
-
-        self.employee_table.setColumnWidth(0, 125)
-        self.employee_table.setColumnWidth(1, 245)
-        self.employee_table.setColumnWidth(2, 145)
-        self.employee_table.setColumnWidth(3, 230)
-        self.employee_table.setColumnWidth(4, 140)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setStretchLastSection(True)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.employee_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.employee_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
