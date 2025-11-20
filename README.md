@@ -30,7 +30,7 @@ UniTrack is a python-based desktop application that records, manages and generat
   git clone https://github.com/EmmanuelBronyah/UniTrack.git
   ```
 
-### 2. Navigate into project root 
+### 2. Navigate into project root
   
   ```bash
   cd UniTrack
@@ -83,6 +83,8 @@ After the build completes, the executable will be located at:
 ![Adding a deduction](assets/video/add%20record.gif)
 
 ### Importing & Exporting Records
+
+* A sample Excel file (`test_employees.xlsx`) containing 6000 rows of dummy employee records is located in the project root for testing import and export functionality.
   
 ![Input/Export](assets/video/import%20export.gif)
 
