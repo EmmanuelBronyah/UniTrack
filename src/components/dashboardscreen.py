@@ -228,9 +228,6 @@ class DashboardScreen(QtWidgets.QWidget):
             ]
         )
 
-        header_item = self.employee_table.horizontalHeaderItem(0)
-        header_item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-
         self.employee_table.setCursor(QtCore.Qt.PointingHandCursor)
         self.employee_table.cellClicked.connect(self.get_service_number_from_cell)
 
