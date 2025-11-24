@@ -79,7 +79,7 @@ After the build completes, the executable will be located at:
 ### Splash screen → Login → Dashboard
 
 * Default credentials
-  * Username: `admin`
+  * Username: `Admin`
   * Password: `010101`
 
 ![Splash → Login → Dashboard](assets/video/splashscreen%20to%20login.gif)
