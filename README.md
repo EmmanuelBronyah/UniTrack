@@ -36,19 +36,25 @@ UniTrack is a python-based desktop application that records, manages and generat
   cd UniTrack
   ```
 
-### 3. Activate virtual environment
+### 3. Create virtual environment
+
+```bash
+  python -m venv venv
+```
+
+### 4. Activate virtual environment
   
   ```bash
   source venv/Scripts/activate
   ```
 
-### 4. Install dependencies
+### 5. Install dependencies
   
   ```bash
   pip install -r requirements.txt
   ```
 
-### 5. Run application
+### 6. Run application
   
   ```bash
   python -m src.main
@@ -103,6 +109,10 @@ After the build completes, the executable will be located at:
 ## Know Issues
 
 * When a deduction record is added using the add record button and is saved, adding a subsequent deduction record to the same employee without closing and re-opening the add record window will result in an auto-calculated outstanding amount that is generated based on the outstanding amount used for the initial deduction record added.
+
+## Download the App
+
+For Windows users, download the latest executable from [Releases page](https://github.com/EmmanuelBronyah/UniTrack/releases/tag/v.1.0.0)
 
 ## License
 
