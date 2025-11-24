@@ -7,7 +7,7 @@ if getattr(sys, "frozen", False):
     base_path = sys._MEIPASS
 else:
     # Running in dev
-    base_path = os.path.abspath(os.path.dirname(__file__))
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 src_path = os.path.join(base_path, "src")
 if src_path not in sys.path:
