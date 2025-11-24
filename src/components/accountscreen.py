@@ -334,6 +334,7 @@ class AccountScreen(QtWidgets.QMainWindow):
             background-color: #ADADAD;
             color: #3B3B3B;
             font-weight: bold;
+            border-radius: 5; 
             padding-left: 8px;
             """
         )

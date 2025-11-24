@@ -87,7 +87,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.category_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.category_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.category_dropdown, 0, 3)
 
@@ -124,7 +124,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.gender_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.gender_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.gender_dropdown, 2, 1)
 
@@ -151,7 +151,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.unit_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.unit_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.unit_dropdown, 3, 1)
 
@@ -180,7 +180,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.grade_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.grade_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.grade_dropdown, 4, 1)
 
@@ -198,7 +198,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.deduction_status_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.deduction_status_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.deduction_status_dropdown, 4, 3)
 
@@ -214,7 +214,7 @@ class SingleOccurrenceWindow(QtWidgets.QWidget):
 
         self.rank_dropdown.setFixedSize(QtCore.QSize(195, 35))
         self.rank_dropdown.setStyleSheet(
-            "background-color: #ADADAD; color: #3B3B3B; padding-left: 8px;"
+            "background-color: #ADADAD; border-radius: 5;  color: #3B3B3B; padding-left: 8px;"
         )
         self.grid_layout.addWidget(self.rank_dropdown, 5, 1)
 
