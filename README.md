@@ -12,6 +12,14 @@ UniTrack is a python-based desktop application that records, manages and generat
 * Search employee records by name or service number
 * Backup management and user account controls
 
+## Why I Built This
+During my national service, the uniform office relied heavily on paper records.  
+Data was often lost, and tracking deductions was slow and error-prone.  
+
+I built UniTrack to solve these problems.  
+The application stores all data locally on the PC, so there are no internet constraints, this was important because the internet was unreliable.  
+It streamlined record management, automated calculations, and made data tracking reliable and efficient.
+
 ## Requirements
 
 * Python 3.10+
